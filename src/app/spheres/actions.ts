@@ -155,11 +155,14 @@ export async function createTask(formData: FormData) {
     user_id: user.id,
   });
   if (error) throw new Error(error.message);
-  const back = data.projectId
-    ? `/spheres/${data.sphereId}/projects/${data.projectId}`
-    : `/spheres/${data.sphereId}`;
-  revalidatePath(back);
+  revalidatePath("/today");
   revalidatePath("/projects");
+  if (data.sphereId) {
+    const back = data.projectId
+      ? `/spheres/${data.sphereId}/projects/${data.projectId}`
+      : `/spheres/${data.sphereId}`;
+    revalidatePath(back);
+  }
 }
 
 export async function toggleTask(id: string, done: boolean) {
