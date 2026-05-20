@@ -62,6 +62,8 @@ export default async function SpheresPage() {
             maxLength={2}
             className="w-14 rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
           />
+        </div>
+        <div className="flex gap-2">
           <input
             name="color"
             type="color"
@@ -70,7 +72,7 @@ export default async function SpheresPage() {
           />
           <button
             type="submit"
-            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+            className="flex-1 rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
           >
             Добавить
           </button>
