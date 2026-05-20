@@ -133,7 +133,7 @@ export default async function SpherePage({
           <div className="flex gap-2">
             <input
               name="dueAt"
-              type="datetime-local"
+              type="date"
               className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
             />
             <OverdueActionSelect />

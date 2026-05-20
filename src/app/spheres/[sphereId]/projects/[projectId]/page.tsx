@@ -45,50 +45,52 @@ export default async function ProjectPage({
   return (
     <main className="mx-auto w-full max-w-3xl p-6 space-y-6">
       <div>
-        <Link
-          href={`/spheres/${sphereId}`}
-          className="text-sm text-neutral-500 hover:underline"
-        >
-          ← {s.icon} {s.name}
-        </Link>
-        <div className="flex items-start justify-between mt-1">
-          <h1 className="text-2xl font-semibold">{p.name}</h1>
+        <div className="flex items-start justify-between gap-2">
+          <h1 className="text-2xl font-semibold break-words min-w-0">{p.name}</h1>
           <form action={deleteProject.bind(null, projectId, sphereId)}>
             <button
               type="submit"
-              className="text-neutral-400 hover:text-red-500 mt-1"
+              className="text-neutral-400 hover:text-red-500 mt-1 flex-shrink-0"
             >
               <Trash2 size={18} />
             </button>
           </form>
         </div>
+        <Link
+          href={`/spheres/${sphereId}`}
+          className="mt-1 inline-block text-sm text-neutral-500 hover:underline"
+        >
+          ← {s.icon} {s.name}
+        </Link>
         {p.description && (
           <p className="text-sm text-neutral-500 mt-1">{p.description}</p>
         )}
       </div>
 
       {/* Add task */}
-      <form action={createTask} className="flex gap-2">
+      <form action={createTask} className="flex flex-col gap-2 sm:flex-row">
         <input type="hidden" name="projectId" value={projectId} />
         <input type="hidden" name="sphereId" value={sphereId} />
         <input
           name="title"
           required
           placeholder="Новая задача…"
-          className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
+          className="w-full rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-1"
         />
-        <input
-          name="dueAt"
-          type="datetime-local"
-          className="rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
-        />
-        <OverdueActionSelect />
-        <button
-          type="submit"
-          className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          + Задача
-        </button>
+        <div className="flex gap-2">
+          <input
+            name="dueAt"
+            type="date"
+            className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+          />
+          <OverdueActionSelect />
+          <button
+            type="submit"
+            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+          >
+            + Задача
+          </button>
+        </div>
       </form>
 
       {/* Todo tasks */}
