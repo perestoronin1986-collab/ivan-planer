@@ -17,6 +17,7 @@ export default async function Home() {
 
       <nav className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
+          { href: "/today", label: "Сегодня" },
           { href: "/week", label: "Неделя" },
           { href: "/inbox", label: "Inbox" },
           { href: "/spheres", label: "Сферы" },
