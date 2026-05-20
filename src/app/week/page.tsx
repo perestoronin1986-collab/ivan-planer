@@ -92,23 +92,22 @@ export default async function WeekPage({
         )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 snap-x">
+      <div className="flex flex-col gap-2 md:grid md:grid-cols-7">
         {days.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDay.get(key) ?? [];
           const dayLabel = format(day, "EEE d", { locale: ru });
 
           return (
-            <div key={key} className="flex-shrink-0 w-56 snap-start md:w-auto md:flex-1">
-              <WeekDayColumn
-                dayLabel={dayLabel}
-                dayKey={key}
-                today={isToday(day)}
-                tasks={dayTasks}
-                spheres={spheres}
-                projects={projects}
-              />
-            </div>
+            <WeekDayColumn
+              key={key}
+              dayLabel={dayLabel}
+              dayKey={key}
+              today={isToday(day)}
+              tasks={dayTasks}
+              spheres={spheres}
+              projects={projects}
+            />
           );
         })}
       </div>
