@@ -310,7 +310,8 @@ export async function createRecurringTask(formData: FormData) {
 
   const { error: oErr } = await supabase.from("task").insert(occurrences);
   if (oErr) {
-    await supabase.from("task").delete().eq("id", template.id).eq("user_id", user.id);
+    const { error: rErr } = await supabase.from("task").delete().eq("id", template.id).eq("user_id", user.id);
+    if (rErr) console.error("Rollback failed, orphaned template:", template.id, rErr.message);
     throw new Error(oErr.message);
   }
 

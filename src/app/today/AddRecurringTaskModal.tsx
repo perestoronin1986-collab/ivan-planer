@@ -44,6 +44,7 @@ export function AddRecurringTaskModal({
   const [endCount, setEndCount] = useState(10);
   const [overdueAction, setOverdueAction] = useState<"reschedule" | "">("reschedule");
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleWeekday = (key: string) =>
     setWeekdays((prev) =>
@@ -70,6 +71,7 @@ export function AddRecurringTaskModal({
     setEndDate("");
     setEndCount(10);
     setOverdueAction("reschedule");
+    setError(null);
   };
 
   const preview = useMemo(() => {
@@ -119,6 +121,7 @@ export function AddRecurringTaskModal({
     e.preventDefault();
     if (!preview.length) return;
     setPending(true);
+    setError(null);
     try {
       const fd = new FormData();
       fd.append("title", title);
@@ -142,6 +145,8 @@ export function AddRecurringTaskModal({
       await createRecurringTask(fd);
       resetForm();
       dialogRef.current?.close();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка при создании задачи");
     } finally {
       setPending(false);
     }
@@ -403,6 +408,10 @@ export function AddRecurringTaskModal({
                 )}
               </div>
             </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500">{error}</p>
           )}
 
           <div className="flex gap-2 pt-1">
