@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import { z } from "zod";
+import { RRule } from "rrule";
 
 const SphereSchema = z.object({
   name: z.string().min(1).max(100),
@@ -197,4 +198,111 @@ export async function deleteTask(id: string) {
   revalidatePath("/today");
   revalidatePath("/tasks");
   revalidatePath("/projects");
+}
+
+export async function createRecurringTask(formData: FormData) {
+  const user = await requireUser();
+
+  const title = (formData.get("title") as string)?.trim();
+  const sphereId = formData.get("sphereId") as string;
+  const projectId = (formData.get("projectId") as string) || null;
+  const pattern = formData.get("pattern") as "weekly" | "monthly" | "interval";
+  const startDate = formData.get("startDate") as string;
+  const endType = formData.get("endType") as "date" | "count";
+  const endDateRaw = (formData.get("endDate") as string) || null;
+  const endCountRaw = (formData.get("endCount") as string) || null;
+  const overdueActionRaw = formData.get("overdueAction") as string | null;
+  const overdueAction = overdueActionRaw === "reschedule" ? ("reschedule" as const) : null;
+
+  if (!title || !sphereId || !startDate) throw new Error("Missing required fields");
+
+  const dtstart = new Date(startDate + "T00:00:00Z");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opts: Record<string, any> = { dtstart };
+
+  if (pattern === "weekly") {
+    const weekdaysRaw = (formData.get("weekdays") as string) || "";
+    const weekInterval = Math.max(1, parseInt(formData.get("weekInterval") as string) || 1);
+    const dayMap: Record<string, typeof RRule.MO> = {
+      MO: RRule.MO, TU: RRule.TU, WE: RRule.WE, TH: RRule.TH,
+      FR: RRule.FR, SA: RRule.SA, SU: RRule.SU,
+    };
+    const byweekday = weekdaysRaw.split(",").filter(Boolean).map((d) => dayMap[d]).filter(Boolean);
+    if (!byweekday.length) throw new Error("Select at least one weekday");
+    opts.freq = RRule.WEEKLY;
+    opts.interval = weekInterval;
+    opts.byweekday = byweekday;
+  } else if (pattern === "monthly") {
+    const monthDaysRaw = (formData.get("monthDays") as string) || "";
+    const monthInterval = Math.max(1, parseInt(formData.get("monthInterval") as string) || 1);
+    const bymonthday = monthDaysRaw
+      .split(",")
+      .filter(Boolean)
+      .map(Number)
+      .filter((n) => n >= 1 && n <= 31);
+    if (!bymonthday.length) throw new Error("Select at least one day of month");
+    opts.freq = RRule.MONTHLY;
+    opts.interval = monthInterval;
+    opts.bymonthday = bymonthday;
+  } else {
+    const dayInterval = Math.max(1, parseInt(formData.get("dayInterval") as string) || 1);
+    opts.freq = RRule.DAILY;
+    opts.interval = dayInterval;
+  }
+
+  if (endType === "date" && endDateRaw) {
+    const until = new Date(endDateRaw + "T23:59:59Z");
+    if (isNaN(until.getTime()) || until <= dtstart) throw new Error("Invalid end date");
+    opts.until = until;
+  } else if (endType === "count" && endCountRaw) {
+    const count = parseInt(endCountRaw);
+    if (count < 1 || count > 500) throw new Error("Count must be 1–500");
+    opts.count = count;
+  } else {
+    throw new Error("End condition required");
+  }
+
+  const rule = new RRule(opts);
+  const dates = rule.all();
+  if (!dates.length) throw new Error("No occurrences generated");
+
+  const rruleStr = rule.toString();
+  const rruleUntil = opts.until ? (opts.until as Date).toISOString() : null;
+
+  const supabase = await createClient();
+
+  const { data: template, error: tErr } = await supabase
+    .from("task")
+    .insert({
+      title,
+      sphere_id: sphereId,
+      project_id: projectId,
+      rrule: rruleStr,
+      rrule_until: rruleUntil,
+      status: "done",
+      user_id: user.id,
+      overdue_action: overdueAction,
+    })
+    .select("id")
+    .single();
+  if (tErr) throw new Error(tErr.message);
+
+  const occurrences = dates.map((d) => ({
+    title,
+    sphere_id: sphereId,
+    project_id: projectId,
+    parent_id: template.id,
+    due_at: new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    ).toISOString(),
+    overdue_action: overdueAction,
+    status: "todo" as const,
+    user_id: user.id,
+  }));
+
+  const { error: oErr } = await supabase.from("task").insert(occurrences);
+  if (oErr) throw new Error(oErr.message);
+
+  revalidatePath("/today");
 }
