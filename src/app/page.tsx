@@ -7,10 +7,10 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 p-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">IvanPlaner</h1>
-        <form action={signOut}>
-          <span className="mr-3 text-sm text-neutral-500">{user.email}</span>
+        <form action={signOut} className="flex items-center gap-3">
+          <span className="text-sm text-neutral-500">{user.email}</span>
           <button className="text-sm underline">выйти</button>
         </form>
       </header>
