@@ -44,7 +44,7 @@ export function WeekDayColumn({
     >
       <div className="flex items-center justify-between gap-1">
         <p
-          className={`text-xs font-semibold ${
+          className={`text-sm font-semibold ${
             today ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-500"
           }`}
         >

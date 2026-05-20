@@ -96,7 +96,7 @@ export default async function WeekPage({
         {days.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDay.get(key) ?? [];
-          const dayLabel = format(day, "EEE d", { locale: ru });
+          const dayLabel = format(day, "EEEE, d MMMM", { locale: ru });
 
           return (
             <WeekDayColumn
