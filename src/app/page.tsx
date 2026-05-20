@@ -19,6 +19,7 @@ export default async function Home() {
         {[
           { href: "/today", label: "Сегодня" },
           { href: "/week", label: "Неделя" },
+          { href: "/month", label: "Месяц" },
           { href: "/inbox", label: "Inbox" },
           { href: "/spheres", label: "Сферы" },
           { href: "/projects", label: "Проекты" },
