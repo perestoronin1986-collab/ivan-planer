@@ -88,6 +88,18 @@ export function AddTaskModal({
             />
           </div>
 
+          <div className="space-y-1">
+            <label className="text-xs text-neutral-500">Если просрочить</label>
+            <select
+              name="overdueAction"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            >
+              <option value="">— не выбрано —</option>
+              <option value="reschedule">Перенести на следующий день</option>
+              <option value="autocomplete">Закрыть автоматически</option>
+            </select>
+          </div>
+
           <div className="flex gap-2 pt-1">
             <button
               type="button"
