@@ -87,46 +87,47 @@ export default async function ProjectsPage() {
           return (
             <div key={p.id} className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               {/* Project header */}
-              <div className="flex items-center gap-3 px-4 py-3 bg-neutral-50 dark:bg-neutral-900">
-                {/* Done toggle */}
-                <form action={toggleProjectDone.bind(null, p.id, p.sphere_id, p.status !== "done")}>
-                  <button
-                    type="submit"
-                    title={p.status === "done" ? "Вернуть в работу" : "Отметить выполненным"}
-                    className={`flex-shrink-0 ${p.status === "done" ? "text-emerald-500" : "text-neutral-300 hover:text-emerald-500"}`}
-                  >
-                    {p.status === "done" ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                  </button>
-                </form>
-                {p.sphere && (
-                  <span
-                    className="inline-block h-3 w-3 rounded-full flex-shrink-0"
-                    style={{ background: p.sphere.color }}
-                  />
-                )}
-                <div className="flex-1 min-w-0">
+              <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center gap-3">
+                  {/* Done toggle */}
+                  <form action={toggleProjectDone.bind(null, p.id, p.sphere_id, p.status !== "done")}>
+                    <button
+                      type="submit"
+                      title={p.status === "done" ? "Вернуть в работу" : "Отметить выполненным"}
+                      className={`flex-shrink-0 ${p.status === "done" ? "text-emerald-500" : "text-neutral-300 hover:text-emerald-500"}`}
+                    >
+                      {p.status === "done" ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    </button>
+                  </form>
+                  {p.sphere && (
+                    <span
+                      className="inline-block h-3 w-3 rounded-full flex-shrink-0"
+                      style={{ background: p.sphere.color }}
+                    />
+                  )}
                   <Link
                     href={`/spheres/${p.sphere_id}/projects/${p.id}`}
-                    className={`font-medium hover:underline ${p.status === "done" ? "line-through text-neutral-400" : ""}`}
+                    className={`flex-1 min-w-0 break-words font-medium hover:underline ${p.status === "done" ? "line-through text-neutral-400" : ""}`}
                   >
                     {p.icon && <span className="mr-1">{p.icon}</span>}{p.name}
                   </Link>
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    p.status === "done"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : p.status === "paused"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                  }`}>
+                    {p.status === "done" ? "готово" : p.status === "paused" ? "на паузе" : "в процессе"}
+                  </span>
                 </div>
-                {/* Change sphere */}
-                <SphereSelectorForm
-                  projectId={p.id}
-                  currentSphereId={p.sphere_id}
-                  spheres={sphereList}
-                />
-                <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                  p.status === "done"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : p.status === "paused"
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
-                }`}>
-                  {p.status === "done" ? "готово" : p.status === "paused" ? "на паузе" : "в процессе"}
-                </span>
+                <div className="mt-2 pl-8">
+                  <SphereSelectorForm
+                    projectId={p.id}
+                    currentSphereId={p.sphere_id}
+                    spheres={sphereList}
+                  />
+                </div>
               </div>
 
               {/* Tasks */}
@@ -146,27 +147,29 @@ export default async function ProjectsPage() {
               )}
 
               {/* Inline add task form */}
-              <form action={createTask} className="flex gap-2 px-4 py-2 border-t border-neutral-100 dark:border-neutral-800">
+              <form action={createTask} className="flex flex-col gap-2 px-4 py-2 border-t border-neutral-100 dark:border-neutral-800 sm:flex-row">
                 <input type="hidden" name="projectId" value={p.id} />
                 <input type="hidden" name="sphereId" value={p.sphere_id} />
                 <input
                   name="title"
                   required
                   placeholder="+ новая задача…"
-                  className="flex-1 text-sm bg-transparent outline-none placeholder:text-neutral-400"
+                  className="w-full text-sm bg-transparent outline-none placeholder:text-neutral-400 sm:flex-1"
                 />
-                <input
-                  name="dueAt"
-                  type="datetime-local"
-                  className="rounded border border-neutral-200 px-2 py-1 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700"
-                />
-                <OverdueActionSelect />
-                <button
-                  type="submit"
-                  className="rounded bg-neutral-900 px-3 py-1 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-                >
-                  Добавить
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    name="dueAt"
+                    type="date"
+                    className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+                  />
+                  <OverdueActionSelect />
+                  <button
+                    type="submit"
+                    className="rounded bg-neutral-900 px-3 py-1 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+                  >
+                    Добавить
+                  </button>
+                </div>
               </form>
             </div>
           );
