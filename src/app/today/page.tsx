@@ -45,8 +45,9 @@ export default async function TodayPage() {
   const tasks = tasksData ?? [];
   const spheres = (spheresData ?? []) as Pick<SphereRow, "id" | "name" | "color" | "icon">[];
   const projects = (projectsData ?? []) as Pick<ProjectRow, "id" | "name" | "sphere_id">[];
-  const overdue = tasks.filter((t) => t.due_at! < todayStart);
-  const today = tasks.filter((t) => t.due_at! >= todayStart);
+  const todayStartMs = startOfDay(now).getTime();
+  const overdue = tasks.filter((t) => new Date(t.due_at!).getTime() < todayStartMs);
+  const today = tasks.filter((t) => new Date(t.due_at!).getTime() >= todayStartMs);
 
   return (
     <main className="mx-auto w-full max-w-3xl p-6 space-y-6">
