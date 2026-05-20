@@ -216,6 +216,12 @@ export async function createRecurringTask(formData: FormData) {
 
   if (!title || !sphereId || !startDate) throw new Error("Missing required fields");
 
+  const sphereIdParsed = z.string().uuid().safeParse(sphereId);
+  if (!sphereIdParsed.success) throw new Error("Invalid sphereId");
+
+  if (!["weekly", "monthly", "interval"].includes(pattern))
+    throw new Error("Invalid pattern");
+
   const dtstart = new Date(startDate + "T00:00:00Z");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,6 +271,7 @@ export async function createRecurringTask(formData: FormData) {
 
   const rule = new RRule(opts);
   const dates = rule.all();
+  if (dates.length > 500) throw new Error(`Too many occurrences (${dates.length}); reduce the date range or use count instead`);
   if (!dates.length) throw new Error("No occurrences generated");
 
   const rruleStr = rule.toString();
@@ -276,7 +283,7 @@ export async function createRecurringTask(formData: FormData) {
     .from("task")
     .insert({
       title,
-      sphere_id: sphereId,
+      sphere_id: sphereIdParsed.data,
       project_id: projectId,
       rrule: rruleStr,
       rrule_until: rruleUntil,
@@ -290,7 +297,7 @@ export async function createRecurringTask(formData: FormData) {
 
   const occurrences = dates.map((d) => ({
     title,
-    sphere_id: sphereId,
+    sphere_id: sphereIdParsed.data,
     project_id: projectId,
     parent_id: template.id,
     due_at: new Date(
@@ -302,7 +309,10 @@ export async function createRecurringTask(formData: FormData) {
   }));
 
   const { error: oErr } = await supabase.from("task").insert(occurrences);
-  if (oErr) throw new Error(oErr.message);
+  if (oErr) {
+    await supabase.from("task").delete().eq("id", template.id).eq("user_id", user.id);
+    throw new Error(oErr.message);
+  }
 
   revalidatePath("/today");
 }
