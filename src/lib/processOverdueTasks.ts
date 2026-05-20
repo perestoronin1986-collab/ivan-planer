@@ -1,13 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { startOfTomorrow } from "date-fns";
+import { startOfDay, startOfTomorrow } from "date-fns";
 
 export async function processOverdueTasks(supabase: SupabaseClient) {
   const now = new Date().toISOString();
+  const startOfToday = startOfDay(new Date()).toISOString();
 
   const { data: overdue } = await supabase
     .from("task")
     .select("id, overdue_action")
-    .lt("due_at", now)
+    .lt("due_at", startOfToday)
     .neq("status", "done")
     .not("overdue_action", "is", null);
 
