@@ -6,6 +6,7 @@ import { Square, Trash2 } from "lucide-react";
 import { processOverdueTasks } from "@/lib/processOverdueTasks";
 import { startOfDay, endOfDay, format } from "date-fns";
 import { AddTaskModal } from "./AddTaskModal";
+import { AddRecurringTaskModal } from "./AddRecurringTaskModal";
 
 type Row = {
   id: string;
@@ -57,7 +58,10 @@ export default async function TodayPage() {
         <h1 className="text-2xl font-semibold mt-1">Сегодня</h1>
       </div>
 
-      <AddTaskModal spheres={spheres} projects={projects} todayDefault={todayDefault} />
+      <div className="flex gap-2">
+        <AddTaskModal spheres={spheres} projects={projects} todayDefault={todayDefault} />
+        <AddRecurringTaskModal spheres={spheres} projects={projects} todayDefault={todayDefault} />
+      </div>
 
       {tasks.length === 0 && (
         <p className="text-sm text-neutral-500 py-4 text-center">Задач нет. Отличный день!</p>
