@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import type { TaskStatus } from "@/lib/db";
-import { toggleTask } from "@/app/spheres/actions";
+import type { TaskStatus, SphereRow, ProjectRow } from "@/lib/db";
 import { processOverdueTasks } from "@/lib/processOverdueTasks";
-import { CheckSquare, Square } from "lucide-react";
 import {
   startOfWeek,
   endOfWeek,
@@ -13,6 +11,7 @@ import {
   isToday,
 } from "date-fns";
 import { ru } from "date-fns/locale";
+import { WeekDayColumn } from "./WeekDayColumn";
 
 type Row = {
   id: string;
@@ -20,7 +19,7 @@ type Row = {
   status: TaskStatus;
   due_at: string | null;
   carry_count: number;
-  sphere: { name: string; color: string } | null;
+  sphere: { name: string; color: string; icon: string | null } | null;
 };
 
 export default async function WeekPage({
@@ -41,16 +40,22 @@ export default async function WeekPage({
 
   await processOverdueTasks(supabase);
 
-  const { data, error } = await supabase
-    .from("task")
-    .select("id, title, status, due_at, carry_count, sphere:sphere_id(name, color)")
-    .not("due_at", "is", null)
-    .gte("due_at", weekStart.toISOString())
-    .lte("due_at", weekEnd.toISOString())
-    .returns<Row[]>();
+  const [{ data, error }, { data: spheresData }, { data: projectsData }] = await Promise.all([
+    supabase
+      .from("task")
+      .select("id, title, status, due_at, carry_count, sphere:sphere_id(name, color, icon)")
+      .not("due_at", "is", null)
+      .gte("due_at", weekStart.toISOString())
+      .lte("due_at", weekEnd.toISOString())
+      .returns<Row[]>(),
+    supabase.from("sphere").select("id, name, icon").eq("archived", false).order("order"),
+    supabase.from("project").select("id, name").eq("status", "active").order("name"),
+  ]);
   if (error) throw new Error(error.message);
 
   const tasks = data ?? [];
+  const spheres = (spheresData ?? []) as Pick<SphereRow, "id" | "name" | "icon">[];
+  const projects = (projectsData ?? []) as Pick<ProjectRow, "id" | "name">[];
   const tasksByDay = new Map<string, Row[]>();
   for (const day of days) {
     tasksByDay.set(format(day, "yyyy-MM-dd"), []);
@@ -91,47 +96,18 @@ export default async function WeekPage({
         {days.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDay.get(key) ?? [];
-          const today = isToday(day);
+          const dayLabel = format(day, "EEE d", { locale: ru });
 
           return (
-            <div
+            <WeekDayColumn
               key={key}
-              className={`min-h-32 rounded-lg border p-2 space-y-1 ${
-                today
-                  ? "border-neutral-900 dark:border-neutral-100"
-                  : "border-neutral-200 dark:border-neutral-800"
-              }`}
-            >
-              <p className={`text-xs font-semibold ${today ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-500"}`}>
-                {format(day, "EEE d", { locale: ru })}
-              </p>
-              {dayTasks.map((t) => (
-                <div key={t.id} className="flex items-start gap-1">
-                  <form action={toggleTask.bind(null, t.id, t.status !== "done")}>
-                    <button type="submit" className="mt-0.5 text-neutral-400 hover:text-neutral-900 flex-shrink-0">
-                      {t.status === "done" ? <CheckSquare size={12} /> : <Square size={12} />}
-                    </button>
-                  </form>
-                  <div className="min-w-0">
-                    {t.sphere?.color && (
-                      <span
-                        className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle"
-                        style={{ background: t.sphere.color }}
-                      />
-                    )}
-                    <span className={`text-xs leading-tight ${t.status === "done" ? "line-through text-neutral-400" : ""}`}>
-                      {t.title}
-                    </span>
-                    {t.carry_count > 0 && (
-                      <span className="ml-1 text-xs text-amber-500" title={`Перенесено ${t.carry_count} раз`}>↩</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {dayTasks.length === 0 && (
-                <p className="text-xs text-neutral-300 dark:text-neutral-700">—</p>
-              )}
-            </div>
+              dayLabel={dayLabel}
+              dayKey={key}
+              today={isToday(day)}
+              tasks={dayTasks}
+              spheres={spheres}
+              projects={projects}
+            />
           );
         })}
       </div>
