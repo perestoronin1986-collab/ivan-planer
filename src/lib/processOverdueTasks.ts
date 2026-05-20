@@ -25,10 +25,10 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
   const tomorrow = startOfTomorrow().toISOString();
 
   if (toReschedule.length) {
-    await supabase
-      .from("task")
-      .update({ due_at: tomorrow })
-      .in("id", toReschedule);
+    await Promise.all([
+      supabase.from("task").update({ due_at: tomorrow }).in("id", toReschedule),
+      supabase.rpc("increment_carry_count", { task_ids: toReschedule }),
+    ]);
   }
 
   if (toComplete.length) {

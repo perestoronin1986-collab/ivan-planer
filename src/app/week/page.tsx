@@ -19,6 +19,7 @@ type Row = {
   title: string;
   status: TaskStatus;
   due_at: string | null;
+  carry_count: number;
   sphere: { name: string; color: string } | null;
 };
 
@@ -42,7 +43,7 @@ export default async function WeekPage({
 
   const { data, error } = await supabase
     .from("task")
-    .select("id, title, status, due_at, sphere:sphere_id(name, color)")
+    .select("id, title, status, due_at, carry_count, sphere:sphere_id(name, color)")
     .not("due_at", "is", null)
     .gte("due_at", weekStart.toISOString())
     .lte("due_at", weekEnd.toISOString())
@@ -121,6 +122,9 @@ export default async function WeekPage({
                     <span className={`text-xs leading-tight ${t.status === "done" ? "line-through text-neutral-400" : ""}`}>
                       {t.title}
                     </span>
+                    {t.carry_count > 0 && (
+                      <span className="ml-1 text-xs text-amber-500" title={`Перенесено ${t.carry_count} раз`}>↩</span>
+                    )}
                   </div>
                 </div>
               ))}

@@ -80,6 +80,7 @@ export const task = pgTable(
     rrule: text("rrule"),
     rruleUntil: timestamp("rrule_until", { withTimezone: true }),
     order: integer("order").default(0).notNull(),
+    carryCount: integer("carry_count").default(0).notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

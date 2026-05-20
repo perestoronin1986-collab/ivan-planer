@@ -12,6 +12,7 @@ type Row = {
   title: string;
   status: TaskStatus;
   due_at: string | null;
+  carry_count: number;
   sphere: { name: string; color: string } | null;
   project: { name: string } | null;
 };
@@ -31,7 +32,7 @@ export default async function TodayPage() {
     await Promise.all([
       supabase
         .from("task")
-        .select("id, title, status, due_at, sphere:sphere_id(name, color), project:project_id(name)")
+        .select("id, title, status, due_at, carry_count, sphere:sphere_id(name, color), project:project_id(name)")
         .neq("status", "done")
         .not("due_at", "is", null)
         .lte("due_at", todayEnd)
@@ -92,6 +93,14 @@ function TaskRow({ t, accentDate }: { t: Row; accentDate?: boolean }) {
         </button>
       </form>
       <span className="flex-1 text-sm">{t.title}</span>
+      {t.carry_count > 0 && (
+        <span
+          className="text-xs font-medium text-amber-500"
+          title={`Перенесено ${t.carry_count} раз`}
+        >
+          ↩{t.carry_count > 1 ? t.carry_count : ""}
+        </span>
+      )}
       {t.sphere?.name && (
         <span className="text-xs text-neutral-400">{t.sphere.name}</span>
       )}
