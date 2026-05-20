@@ -122,26 +122,28 @@ export default async function SpherePage({
             </div>
           ))}
         </div>
-        <form action={createTask} className="flex gap-2">
+        <form action={createTask} className="flex flex-col gap-2 sm:flex-row">
           <input type="hidden" name="sphereId" value={sphereId} />
           <input
             name="title"
             required
             placeholder="Новая задача…"
-            className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
+            className="w-full rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-1"
           />
-          <input
-            name="dueAt"
-            type="datetime-local"
-            className="rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
-          />
-          <OverdueActionSelect />
-          <button
-            type="submit"
-            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            + Задача
-          </button>
+          <div className="flex gap-2">
+            <input
+              name="dueAt"
+              type="datetime-local"
+              className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+            />
+            <OverdueActionSelect />
+            <button
+              type="submit"
+              className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+            >
+              + Задача
+            </button>
+          </div>
         </form>
       </section>
     </main>
