@@ -175,6 +175,7 @@ export async function toggleTask(id: string, done: boolean) {
     .eq("user_id", user.id);
   if (error) throw new Error(error.message);
   revalidatePath("/");
+  revalidatePath("/today");
   revalidatePath("/tasks");
   revalidatePath("/week");
   revalidatePath("/projects");
@@ -190,6 +191,7 @@ export async function deleteTask(id: string) {
     .eq("user_id", user.id);
   if (error) throw new Error(error.message);
   revalidatePath("/");
+  revalidatePath("/today");
   revalidatePath("/tasks");
   revalidatePath("/projects");
 }
