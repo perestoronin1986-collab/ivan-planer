@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import type { TaskStatus, SphereRow, ProjectRow } from "@/lib/db";
-import { toggleTask, deleteTask, createTask } from "@/app/spheres/actions";
+import { toggleTask, deleteTask } from "@/app/spheres/actions";
 import { Square, Trash2 } from "lucide-react";
 import { processOverdueTasks } from "@/lib/processOverdueTasks";
 import { startOfDay, endOfDay, format } from "date-fns";
+import { AddTaskModal } from "./AddTaskModal";
 
 type Row = {
   id: string;
@@ -54,51 +55,7 @@ export default async function TodayPage() {
         <h1 className="text-2xl font-semibold mt-1">Сегодня</h1>
       </div>
 
-      <form action={createTask} className="rounded-lg border border-dashed border-neutral-300 p-4 space-y-2 dark:border-neutral-700">
-        <div className="flex gap-2">
-          <input
-            name="title"
-            required
-            placeholder="Новая задача…"
-            className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
-          />
-          <input
-            name="dueAt"
-            type="datetime-local"
-            defaultValue={todayDefault}
-            className="rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
-          />
-        </div>
-        <div className="flex gap-2">
-          <select
-            name="sphereId"
-            required
-            className="flex-1 rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-          >
-            <option value="">— сфера —</option>
-            {spheres.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.icon ? `${s.icon} ` : ""}{s.name}
-              </option>
-            ))}
-          </select>
-          <select
-            name="projectId"
-            className="flex-1 rounded border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-          >
-            <option value="">— проект (необяз.) —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            Добавить
-          </button>
-        </div>
-      </form>
+      <AddTaskModal spheres={spheres} projects={projects} todayDefault={todayDefault} />
 
       {tasks.length === 0 && (
         <p className="text-sm text-neutral-500 py-4 text-center">Задач нет. Отличный день!</p>
