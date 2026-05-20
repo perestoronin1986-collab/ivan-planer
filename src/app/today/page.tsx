@@ -25,7 +25,7 @@ export default async function TodayPage() {
   const now = new Date();
   const todayEnd = endOfDay(now).toISOString();
   const todayStart = startOfDay(now).toISOString();
-  const todayDefault = format(now, "yyyy-MM-dd'T'HH:mm").slice(0, 16);
+  const todayDefault = format(now, "yyyy-MM-dd");
 
   const [{ data: tasksData, error }, { data: spheresData }, { data: projectsData }] =
     await Promise.all([

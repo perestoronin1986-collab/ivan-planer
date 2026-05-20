@@ -82,7 +82,7 @@ export function AddTaskModal({
             <label className="text-xs text-neutral-500">Дата</label>
             <input
               name="dueAt"
-              type="datetime-local"
+              type="date"
               defaultValue={todayDefault}
               className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
             />
