@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { startOfTomorrow } from "date-fns";
 
 export async function processOverdueTasks(supabase: SupabaseClient) {
   const now = new Date().toISOString();
@@ -20,7 +21,7 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
     .filter((t) => t.overdue_action === "autocomplete")
     .map((t) => t.id);
 
-  const tomorrow = new Date(Date.now() + 86400_000).toISOString();
+  const tomorrow = startOfTomorrow().toISOString();
 
   if (toReschedule.length) {
     await supabase
