@@ -32,12 +32,13 @@ export function AddRecurringTaskModal({
   const [title, setTitle] = useState("");
   const [sphereId, setSphereId] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [pattern, setPattern] = useState<"weekly" | "monthly" | "interval">("weekly");
+  const [pattern, setPattern] = useState<"weekly" | "monthly" | "interval" | "yearly">("weekly");
   const [weekdays, setWeekdays] = useState<string[]>([]);
   const [weekInterval, setWeekInterval] = useState(1);
   const [monthDays, setMonthDays] = useState<number[]>([]);
   const [monthInterval, setMonthInterval] = useState(1);
   const [dayInterval, setDayInterval] = useState(1);
+  const [yearInterval, setYearInterval] = useState(1);
   const [startDate, setStartDate] = useState(todayDefault);
   const [endType, setEndType] = useState<"date" | "count">("count");
   const [endDate, setEndDate] = useState("");
@@ -66,6 +67,7 @@ export function AddRecurringTaskModal({
     setMonthDays([]);
     setMonthInterval(1);
     setDayInterval(1);
+    setYearInterval(1);
     setStartDate(todayDefault);
     setEndType("count");
     setEndDate("");
@@ -96,9 +98,12 @@ export function AddRecurringTaskModal({
         opts.freq = RRule.MONTHLY;
         opts.interval = monthInterval;
         opts.bymonthday = monthDays;
-      } else {
+      } else if (pattern === "interval") {
         opts.freq = RRule.DAILY;
         opts.interval = Math.max(1, dayInterval);
+      } else {
+        opts.freq = RRule.YEARLY;
+        opts.interval = Math.max(1, yearInterval);
       }
 
       if (endType === "date" && endDate) {
@@ -115,7 +120,7 @@ export function AddRecurringTaskModal({
     } catch {
       return [];
     }
-  }, [pattern, weekdays, weekInterval, monthDays, monthInterval, dayInterval, startDate, endType, endDate, endCount]);
+  }, [pattern, weekdays, weekInterval, monthDays, monthInterval, dayInterval, yearInterval, startDate, endType, endDate, endCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,8 +143,10 @@ export function AddRecurringTaskModal({
       } else if (pattern === "monthly") {
         fd.append("monthDays", monthDays.join(","));
         fd.append("monthInterval", String(monthInterval));
-      } else {
+      } else if (pattern === "interval") {
         fd.append("dayInterval", String(dayInterval));
+      } else {
+        fd.append("yearInterval", String(yearInterval));
       }
       if (overdueAction) fd.append("overdueAction", overdueAction);
       await createRecurringTask(fd);
@@ -251,6 +258,9 @@ export function AddRecurringTaskModal({
               <button type="button" className={tabCls(pattern === "interval")} onClick={() => setPattern("interval")}>
                 Интервал
               </button>
+              <button type="button" className={tabCls(pattern === "yearly")} onClick={() => setPattern("yearly")}>
+                Раз в год
+              </button>
             </div>
 
             {pattern === "weekly" && (
@@ -322,6 +332,24 @@ export function AddRecurringTaskModal({
                   className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
                 />
                 <span>дней</span>
+              </div>
+            )}
+
+            {pattern === "yearly" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span>Каждые</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={yearInterval}
+                    onChange={(e) => setYearInterval(Math.max(1, Number(e.target.value)))}
+                    className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                  />
+                  <span>год(а)</span>
+                </div>
+                <p className="text-xs text-neutral-500">Повторяется в день старта каждый год.</p>
               </div>
             )}
           </div>

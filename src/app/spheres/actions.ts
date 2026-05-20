@@ -206,7 +206,7 @@ export async function createRecurringTask(formData: FormData) {
   const title = (formData.get("title") as string)?.trim();
   const sphereId = formData.get("sphereId") as string;
   const projectId = (formData.get("projectId") as string) || null;
-  const pattern = formData.get("pattern") as "weekly" | "monthly" | "interval";
+  const pattern = formData.get("pattern") as "weekly" | "monthly" | "interval" | "yearly";
   const startDate = formData.get("startDate") as string;
   const endType = formData.get("endType") as "date" | "count";
   const endDateRaw = (formData.get("endDate") as string) || null;
@@ -219,7 +219,7 @@ export async function createRecurringTask(formData: FormData) {
   const sphereIdParsed = z.string().uuid().safeParse(sphereId);
   if (!sphereIdParsed.success) throw new Error("Invalid sphereId");
 
-  if (!["weekly", "monthly", "interval"].includes(pattern))
+  if (!["weekly", "monthly", "interval", "yearly"].includes(pattern))
     throw new Error("Invalid pattern");
 
   const dtstart = new Date(startDate + "T00:00:00Z");
@@ -251,10 +251,14 @@ export async function createRecurringTask(formData: FormData) {
     opts.freq = RRule.MONTHLY;
     opts.interval = monthInterval;
     opts.bymonthday = bymonthday;
-  } else {
+  } else if (pattern === "interval") {
     const dayInterval = Math.max(1, parseInt(formData.get("dayInterval") as string) || 1);
     opts.freq = RRule.DAILY;
     opts.interval = dayInterval;
+  } else {
+    const yearInterval = Math.max(1, parseInt(formData.get("yearInterval") as string) || 1);
+    opts.freq = RRule.YEARLY;
+    opts.interval = yearInterval;
   }
 
   if (endType === "date" && endDateRaw) {
