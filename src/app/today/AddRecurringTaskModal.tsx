@@ -55,6 +55,23 @@ export function AddRecurringTaskModal({
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
 
+  const resetForm = () => {
+    setTitle("");
+    setSphereId("");
+    setProjectId("");
+    setPattern("weekly");
+    setWeekdays([]);
+    setWeekInterval(1);
+    setMonthDays([]);
+    setMonthInterval(1);
+    setDayInterval(1);
+    setStartDate(todayDefault);
+    setEndType("count");
+    setEndDate("");
+    setEndCount(10);
+    setOverdueAction("reschedule");
+  };
+
   const preview = useMemo(() => {
     try {
       const dtstart = new Date(startDate + "T00:00:00Z");
@@ -123,6 +140,7 @@ export function AddRecurringTaskModal({
       }
       if (overdueAction) fd.append("overdueAction", overdueAction);
       await createRecurringTask(fd);
+      resetForm();
       dialogRef.current?.close();
     } finally {
       setPending(false);
@@ -155,18 +173,20 @@ export function AddRecurringTaskModal({
 
       <dialog
         ref={dialogRef}
+        aria-labelledby="rt-dialog-title"
         className="w-full max-w-md rounded-xl border border-neutral-200 p-6 shadow-xl backdrop:bg-black/40 dark:border-neutral-700 dark:bg-neutral-900"
         onClick={(e) => {
-          if (e.target === dialogRef.current) dialogRef.current?.close();
+          if (e.target === dialogRef.current) { resetForm(); dialogRef.current?.close(); }
         }}
       >
-        <h2 className="mb-4 text-base font-semibold">Регулярная задача</h2>
+        <h2 id="rt-dialog-title" className="mb-4 text-base font-semibold">Регулярная задача</h2>
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
 
           {/* Title */}
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Название</label>
+            <label htmlFor="rt-title" className="text-xs text-neutral-500">Название</label>
             <input
+              id="rt-title"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -177,8 +197,9 @@ export function AddRecurringTaskModal({
 
           {/* Sphere */}
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Сфера</label>
+            <label htmlFor="rt-sphere" className="text-xs text-neutral-500">Сфера</label>
             <select
+              id="rt-sphere"
               required
               value={sphereId}
               onChange={(e) => setSphereId(e.target.value)}
@@ -196,8 +217,9 @@ export function AddRecurringTaskModal({
 
           {/* Project */}
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Проект (необязательно)</label>
+            <label htmlFor="rt-project" className="text-xs text-neutral-500">Проект (необязательно)</label>
             <select
+              id="rt-project"
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
               className={inputCls + " bg-white dark:bg-neutral-800"}
@@ -301,8 +323,9 @@ export function AddRecurringTaskModal({
 
           {/* Start date */}
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">С какого числа</label>
+            <label htmlFor="rt-start" className="text-xs text-neutral-500">С какого числа</label>
             <input
+              id="rt-start"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -385,7 +408,7 @@ export function AddRecurringTaskModal({
           <div className="flex gap-2 pt-1">
             <button
               type="button"
-              onClick={() => dialogRef.current?.close()}
+              onClick={() => { resetForm(); dialogRef.current?.close(); }}
               className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
             >
               Отмена
