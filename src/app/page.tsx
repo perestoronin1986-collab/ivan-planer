@@ -27,6 +27,7 @@ export default async function Home() {
           { href: "/week", label: "Неделя" },
           { href: "/month", label: "Месяц" },
           { href: "/inbox", label: "Inbox" },
+          { href: "/search", label: "Поиск" },
           { href: "/spheres", label: "Сферы" },
           { href: "/projects", label: "Проекты" },
           { href: "/tasks", label: "Все активные задачи" },
