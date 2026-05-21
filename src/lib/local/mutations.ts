@@ -129,6 +129,14 @@ export async function addTaskLocal(args: {
   parentId?: string | null;
   dueAt?: string | null;
 }): Promise<TaskRow> {
+  // Mirror server-side CHECK constraint `task_context_chk`.
+  // Без этой проверки задача без контекста запишется в Dexie + outbox,
+  // а потом push провалится с CHECK violation и заблокирует всю очередь.
+  if (!args.sphereId && !args.projectId && !args.parentId) {
+    throw new Error(
+      "Задача должна быть привязана к сфере, проекту или родителю",
+    );
+  }
   const row: TaskRow = {
     id: uuid(),
     user_id: args.userId,

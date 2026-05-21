@@ -19,7 +19,14 @@ export default function DonePage() {
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
     const done = tasks
-      .filter((t) => !t.deleted_at && t.status === "done")
+      .filter(
+        (t) =>
+          !t.deleted_at &&
+          t.status === "done" &&
+          // Скрываем шаблоны регулярок (они маркируются status=done,
+          // чтобы не показываться в активных списках).
+          !t.rrule,
+      )
       .sort((a, b) =>
         (b.completed_at ?? b.updated_at).localeCompare(
           a.completed_at ?? a.updated_at,

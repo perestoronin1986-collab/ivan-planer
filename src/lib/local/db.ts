@@ -31,6 +31,15 @@ export type OutboxEntry = {
   last_error?: string | null;
 };
 
+/**
+ * Dead-letter outbox: entries that failed permanently (>= MAX_ATTEMPTS).
+ * Kept out of the main outbox so a single poison entry can't block all
+ * subsequent mutations. Surfaced in the UI for manual review/retry.
+ */
+export type OutboxDeadEntry = OutboxEntry & {
+  failed_at: number;
+};
+
 export type SyncMetaKv = {
   key: string;
   value: string;
@@ -50,6 +59,7 @@ export class LocalDB extends Dexie {
   task!: Table<TaskRow, string>;
   inbox_item!: Table<InboxItemRow, string>;
   outbox!: Table<OutboxEntry, number>;
+  outbox_dead!: Table<OutboxDeadEntry, number>;
   sync_meta!: Table<SyncMetaKv, string>;
 
   constructor() {
@@ -63,6 +73,10 @@ export class LocalDB extends Dexie {
       inbox_item: "id, user_id, processed_at, updated_at, deleted_at",
       outbox: "++id, created_at, [table+row_id], table",
       sync_meta: "key",
+    });
+    // v2: add dead-letter outbox for permanently failed entries.
+    this.version(2).stores({
+      outbox_dead: "++id, failed_at, table",
     });
   }
 }

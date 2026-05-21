@@ -66,12 +66,15 @@ export async function enqueueMutation(
   });
 }
 
-async function pushOutbox(): Promise<{ ok: number; fail: number }> {
+const MAX_ATTEMPTS = 5;
+
+async function pushOutbox(): Promise<{ ok: number; fail: number; dead: number }> {
   const db = localDb();
   const supabase = createClient();
   const entries = await db.outbox.orderBy("created_at").toArray();
   let ok = 0;
   let fail = 0;
+  let dead = 0;
 
   for (const entry of entries) {
     try {
@@ -92,19 +95,37 @@ async function pushOutbox(): Promise<{ ok: number; fail: number }> {
     } catch (err) {
       fail++;
       const msg = err instanceof Error ? err.message : String(err);
+      const nextAttempts = entry.attempts + 1;
+      if (nextAttempts >= MAX_ATTEMPTS) {
+        // Move to dead-letter so it stops blocking the FIFO queue.
+        // UI surfaces these for manual review.
+        await db.transaction("rw", db.outbox, db.outbox_dead, async () => {
+          await db.outbox_dead.add({
+            ...entry,
+            id: undefined,
+            attempts: nextAttempts,
+            last_error: msg,
+            failed_at: Date.now(),
+          });
+          await db.outbox.delete(entry.id!);
+        });
+        dead++;
+        console.error(
+          `Outbox entry moved to dead-letter after ${nextAttempts} attempts`,
+          { table: entry.table, op: entry.op, row_id: entry.row_id, error: msg },
+        );
+        // Continue draining: poison entry no longer blocks the queue.
+        continue;
+      }
       await db.outbox.update(entry.id!, {
-        attempts: entry.attempts + 1,
+        attempts: nextAttempts,
         last_error: msg,
       });
-      // Stop on persistent error after 5 attempts to avoid infinite loop
-      if (entry.attempts + 1 >= 5) {
-        console.error("Outbox entry failed 5x — leaving for manual review", entry);
-      }
       break; // preserve FIFO; retry later
     }
   }
 
-  return { ok, fail };
+  return { ok, fail, dead };
 }
 
 async function pullTable(table: OutboxTable): Promise<number> {
@@ -149,10 +170,11 @@ export async function runSync(): Promise<{
   pushed: number;
   pulled: number;
   failed: number;
+  dead: number;
 }> {
-  if (_syncing) return { pushed: 0, pulled: 0, failed: 0 };
+  if (_syncing) return { pushed: 0, pulled: 0, failed: 0, dead: 0 };
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return { pushed: 0, pulled: 0, failed: 0 };
+    return { pushed: 0, pulled: 0, failed: 0, dead: 0 };
   }
   _syncing = true;
   try {
@@ -165,7 +187,7 @@ export async function runSync(): Promise<{
         console.error(`pull ${t} failed`, err);
       }
     }
-    return { pushed: push.ok, pulled, failed: push.fail };
+    return { pushed: push.ok, pulled, failed: push.fail, dead: push.dead };
   } finally {
     _syncing = false;
   }
