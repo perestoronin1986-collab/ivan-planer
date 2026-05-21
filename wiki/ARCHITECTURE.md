@@ -1,6 +1,6 @@
 # Архитектура IvanPlaner
 
-> Последнее обновление: 2026-05-20
+> Последнее обновление: 2026-05-21
 
 ## Стек
 
@@ -165,3 +165,72 @@ Constraint: у задачи обязан быть хотя бы один из: `
 | `week/WeekDayColumn.tsx` | Колонка дня в недельной сетке с кнопкой `+` |
 | `components/SphereSelectorForm.tsx` | Форма выбора сферы |
 | `components/OverdueActionSelect.tsx` | Селект "что делать при просрочке" |
+| `components/ServiceWorkerRegister.tsx` | Регистрация `/sw.js` + слушатель `RUN_OUTBOX_SYNC` |
+| `components/SyncProvider.tsx` | `installSyncListeners()` на маунт top-level layout |
+
+---
+
+## Offline / PWA
+
+Local-first архитектура: UI читает из локального Dexie (IndexedDB), мутации идут в outbox-очередь, фоновый sync-engine двусторонне синхронизирует с Supabase. LWW по `updated_at`, soft delete через `deleted_at`.
+
+### Слои
+
+```
+UI (useLiveQuery)  →  Dexie (IndexedDB)
+                            ↓
+                    outbox queue (FIFO)
+                            ↓
+                    sync engine (push + pull)
+                            ↓
+                    Supabase Postgres (PostgREST)
+```
+
+### Файлы
+
+| Файл | Назначение |
+|------|-----------|
+| `src/lib/local/db.ts` | Dexie schema: 4 синхр. таблицы + `outbox` + `sync_meta` |
+| `src/lib/local/sync.ts` | `runSync()`, `pushOutbox()`, `pullTable()`, `installSyncListeners()` |
+| `src/lib/local/mutations.ts` | Local-first мутации: `addTaskLocal`, `updateTaskLocal`, `deleteTaskLocal`, `toggleTaskStatusLocal`, `addInboxItemLocal`, `addSphereLocal`, `addProjectLocal`, `processInboxToTaskLocal` |
+| `src/lib/local/useUser.ts` | Хук получения `userId` из Supabase auth |
+| `src/app/manifest.ts` | PWA manifest (`name`, `icons`, `display=standalone`) |
+| `public/sw.js` | Service Worker: precache app shell + network-first navigations + cache-first static + push + background sync |
+| `src/app/offline/page.tsx` | Fallback страница при оффлайне без кэша |
+
+### Sync engine
+
+**Push (outbox → Supabase):**
+- Очередь FIFO, drain по `created_at`
+- `upsert` для insert/update, `update {deleted_at: now()}` для delete
+- При ошибке — `attempts++`, после 5 попыток лог в консоль, FIFO сохраняется (break цикла)
+- Schema collapse: если для `[table+row_id]` уже есть entry — старый удаляется, новый пушится
+
+**Pull (Supabase → Dexie):**
+- Per-table: `select * where updated_at > last_sync_at:<table>` (limit 1000, ordered)
+- Soft-deleted (`deleted_at != null`) → `bulkDelete` из Dexie
+- Остальные → `bulkPut`
+- `last_sync_at:<table>` в `sync_meta` KV store
+
+**Триггеры запуска:**
+- `online` event в window
+- Custom event `ivanplaner:sync-outbox`
+- SW background sync (`sync` event с тегом `outbox-sync`) → postMessage клиентам
+- На маунт страниц через `installSyncListeners()`
+
+### Service Worker стратегии
+
+| Тип запроса | Стратегия |
+|------------|-----------|
+| Навигация (`mode: navigate`) | Network-first → shell-cache → `/offline` |
+| Static (`/_next/static`, `/_next/image`, иконки, `.png/.svg/.css/.js`) | Cache-first |
+| Same-origin GET | Network-first → runtime cache |
+| Supabase API (`*.supabase.co`) | Bypass — sync engine разруливает |
+
+Версия кэша в `VERSION` константе SW — при выкатке нового SW старые кэши удаляются на `activate`.
+
+### Особенности
+
+- **Auth оффлайн:** Supabase JWT кэширован в localStorage (~1ч), refresh без сети упадёт. Решение по необходимости — продлить срок сессии
+- **Размер кэша:** app shell + иконки ~2-5 МБ, IndexedDB до 50 МБ на Android безопасно
+- **Конфликты:** последняя запись по `updated_at` побеждает; field-level merge не делаем — один пользователь, конфликтов мало

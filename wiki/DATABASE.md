@@ -20,8 +20,10 @@
 | `order` | int | порядок отображения |
 | `archived` | bool | архивирована |
 | `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker, auto-bump триггером |
+| `deleted_at` | timestamptz? | soft delete |
 
-Индекс: `sphere_user_idx` на `user_id`
+Индексы: `sphere_user_idx` на `user_id`, `sphere_updated_idx` на `(user_id, updated_at)`
 
 ---
 
@@ -37,8 +39,10 @@
 | `status` | enum | `active` / `paused` / `done` / `archived` |
 | `order` | int | |
 | `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker |
+| `deleted_at` | timestamptz? | soft delete |
 
-Индексы: `project_user_idx`, `project_sphere_idx`
+Индексы: `project_user_idx`, `project_sphere_idx`, `project_updated_idx` на `(user_id, updated_at)`
 
 ---
 
@@ -62,8 +66,10 @@
 | `carry_count` | int | кол-во переносов (overdue reschedule) |
 | `completed_at` | timestamptz? | когда выполнена |
 | `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker |
+| `deleted_at` | timestamptz? | soft delete |
 
-Индексы: `task_user_idx`, `task_project_idx`, `task_sphere_idx`, `task_parent_idx`, `task_due_idx`
+Индексы: `task_user_idx`, `task_project_idx`, `task_sphere_idx`, `task_parent_idx`, `task_due_idx`, `task_updated_idx` на `(user_id, updated_at)`
 
 Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `project_id`, `parent_id` NOT NULL
 
@@ -81,8 +87,10 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `converted_sphere_id` | uuid? FK→sphere | set null on delete |
 | `converted_project_id` | uuid? FK→project | set null on delete |
 | `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker |
+| `deleted_at` | timestamptz? | soft delete |
 
-Индекс: `inbox_user_idx`
+Индексы: `inbox_user_idx`, `inbox_updated_idx` на `(user_id, updated_at)`
 
 ---
 
@@ -113,6 +121,12 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `created_at` | timestamptz | |
 
 Индексы: `notif_user_idx`, `notif_fire_idx` на `(fire_at, sent_at)`
+
+---
+
+## Триггеры
+
+`set_updated_at()` — `BEFORE UPDATE` на `sphere`, `project`, `task`, `inbox_item`. Перед каждым `UPDATE` пишет `NEW.updated_at = now()`. Нужен для LWW-синхронизации (см. ARCHITECTURE → Offline / PWA).
 
 ---
 

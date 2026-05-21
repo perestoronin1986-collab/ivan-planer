@@ -32,8 +32,15 @@ export const sphere = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("sphere_user_idx").on(t.userId)],
+  (t) => [
+    index("sphere_user_idx").on(t.userId),
+    index("sphere_updated_idx").on(t.userId, t.updatedAt),
+  ],
 );
 
 export const project = pgTable(
@@ -51,10 +58,15 @@ export const project = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
     index("project_user_idx").on(t.userId),
     index("project_sphere_idx").on(t.sphereId),
+    index("project_updated_idx").on(t.userId, t.updatedAt),
   ],
 );
 
@@ -85,6 +97,10 @@ export const task = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [
     index("task_user_idx").on(t.userId),
@@ -92,6 +108,7 @@ export const task = pgTable(
     index("task_sphere_idx").on(t.sphereId),
     index("task_parent_idx").on(t.parentId),
     index("task_due_idx").on(t.dueAt),
+    index("task_updated_idx").on(t.userId, t.updatedAt),
     check(
       "task_context_chk",
       sql`(${t.sphereId} IS NOT NULL) OR (${t.projectId} IS NOT NULL) OR (${t.parentId} IS NOT NULL)`,
@@ -119,8 +136,15 @@ export const inboxItem = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (t) => [index("inbox_user_idx").on(t.userId)],
+  (t) => [
+    index("inbox_user_idx").on(t.userId),
+    index("inbox_updated_idx").on(t.userId, t.updatedAt),
+  ],
 );
 
 export const pushSubscription = pgTable(

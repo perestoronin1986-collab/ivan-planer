@@ -1,6 +1,11 @@
 export type TaskStatus = "todo" | "doing" | "done";
 export type ProjectStatus = "active" | "paused" | "done" | "archived";
 
+export type SyncMeta = {
+  updated_at: string;
+  deleted_at: string | null;
+};
+
 export type SphereRow = {
   id: string;
   user_id: string;
@@ -10,7 +15,7 @@ export type SphereRow = {
   order: number;
   archived: boolean;
   created_at: string;
-};
+} & SyncMeta;
 
 export type ProjectRow = {
   id: string;
@@ -22,7 +27,7 @@ export type ProjectRow = {
   icon: string | null;
   order: number;
   created_at: string;
-};
+} & SyncMeta;
 
 export type OverdueAction = "reschedule" | "autocomplete";
 
@@ -44,7 +49,7 @@ export type TaskRow = {
   completed_at: string | null;
   created_at: string;
   overdue_action: OverdueAction | null;
-};
+} & SyncMeta;
 
 export type InboxItemRow = {
   id: string;
@@ -55,4 +60,4 @@ export type InboxItemRow = {
   converted_sphere_id: string | null;
   converted_project_id: string | null;
   created_at: string;
-};
+} & SyncMeta;

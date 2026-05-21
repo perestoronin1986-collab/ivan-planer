@@ -1,6 +1,6 @@
 # Бэклог
 
-> Последнее обновление: 2026-05-20
+> Последнее обновление: 2026-05-21
 
 ---
 
@@ -22,6 +22,7 @@
 - `carry_count` — счётчик переносов задачи
 - Валидация через Zod во всех server actions
 - Деплой на Vercel, автодеплой из `main`
+- **Offline / PWA** — Local-first: Dexie (IndexedDB) + outbox + sync engine (LWW по `updated_at`, soft delete `deleted_at`). Service Worker (precache, network-first navigations, cache-first static, /offline fallback). Manifest + иконки 192/512. tasks/inbox/sphere/project — мутации через local mutations API
 
 ---
 

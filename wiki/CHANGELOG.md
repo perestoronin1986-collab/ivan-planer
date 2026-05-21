@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-05-21 — Offline / PWA (+ багфиксы смоук-теста)
+
+- **fix(middleware):** разрешить публичный доступ к `/manifest.webmanifest`, `/offline`, `/icon`, `/icon1`, `/icon2`, `/apple-icon` (расширен `PUBLIC_PATHS`). Иначе PWA не загрузила бы манифест и иконки на устройстве без активной сессии
+- **fix(inbox):** убран `Dexie.where("processed_at").equals(null)` — IndexedDB не принимает null как ключ. Заменено на `toArray().filter()`
+
+---
+
+## 2026-05-21 — Offline / PWA
+
+- **feat:** offline-first архитектура для tasks / inbox / sphere / project
+  - Миграция `0002_offline_sync.sql`: `updated_at` + `deleted_at` + индексы `(user_id, updated_at)` + триггер `set_updated_at()` на 4 таблицах
+  - Dexie schema (`src/lib/local/db.ts`): `sphere`, `project`, `task`, `inbox_item`, `outbox`, `sync_meta`
+  - Sync engine (`src/lib/local/sync.ts`): push (outbox→Supabase) + pull (delta-pull по `updated_at`), LWW конфликт-резолюция, `installSyncListeners()` на `online` / custom event / mount
+  - Local-first мутации (`src/lib/local/mutations.ts`): `add*Local`, `update*Local`, `delete*Local`, `toggle*Local` — пишут в Dexie + outbox, kick off sync
+  - Service Worker (`public/sw.js`): precache app shell + network-first navigations + cache-first static + push + background sync (`outbox-sync`)
+  - PWA manifest (`src/app/manifest.ts`) + иконки `/icon1` (192) + `/icon2` (512, maskable)
+  - `ServiceWorkerRegister` + `SyncProvider` в `app/layout.tsx`
+  - `/offline` fallback страница
+  - tasks page переведена на `useLiveQuery` + local mutations; аналогично inbox
+
+---
+
 ## 2026-05-20
 
 - **feat:** add per-day task creation and sphere icons to week view
