@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "IvanPlaner",
     short_name: "Plan",
     description: "Личный планер задач",
-    start_url: "/",
+    start_url: "/login",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#c4b5fd",
