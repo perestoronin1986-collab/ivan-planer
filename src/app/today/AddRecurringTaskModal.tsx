@@ -4,6 +4,7 @@ import { useRef, useState, useMemo } from "react";
 import { RRule } from "rrule";
 import { format } from "date-fns";
 import { createRecurringTask } from "@/app/spheres/actions";
+import { runSync } from "@/lib/local/sync";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string; sphere_id: string };
@@ -150,6 +151,7 @@ export function AddRecurringTaskModal({
       }
       if (overdueAction) fd.append("overdueAction", overdueAction);
       await createRecurringTask(fd);
+      await runSync();
       resetForm();
       dialogRef.current?.close();
     } catch (err) {

@@ -28,6 +28,7 @@ export default async function Home() {
           { href: "/spheres", label: "Сферы" },
           { href: "/projects", label: "Проекты" },
           { href: "/tasks", label: "Все задачи" },
+          { href: "/recurring", label: "Регулярные задачи" },
         ].map((item) => (
           <Link
             key={item.href}
