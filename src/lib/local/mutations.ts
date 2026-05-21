@@ -1,9 +1,11 @@
 "use client";
 
+import { RRule } from "rrule";
 import { localDb } from "./db";
 import { enqueueMutation, runSync } from "./sync";
 import type {
   InboxItemRow,
+  OverdueAction,
   ProjectRow,
   SphereRow,
   TaskRow,
@@ -192,6 +194,197 @@ export async function deleteTaskLocal(id: string): Promise<void> {
   await localDb().task.delete(id);
   await enqueueMutation("delete", "task", id, { id });
   void runSync();
+}
+
+// ---------------- Recurring tasks ----------------
+
+export type RecurringPattern = "weekly" | "monthly" | "interval" | "yearly";
+
+export type CreateRecurringArgs = {
+  userId: string;
+  title: string;
+  sphereId: string;
+  projectId?: string | null;
+  pattern: RecurringPattern;
+  startDate: string; // yyyy-mm-dd
+  endType: "date" | "count";
+  endDate?: string | null;
+  endCount?: number | null;
+  weekdays?: string[]; // ["MO","TU",...] when pattern=weekly
+  weekInterval?: number;
+  monthDays?: number[];
+  monthInterval?: number;
+  dayInterval?: number;
+  yearInterval?: number;
+  overdueAction?: OverdueAction | null;
+};
+
+const WEEKDAY_MAP = {
+  MO: RRule.MO,
+  TU: RRule.TU,
+  WE: RRule.WE,
+  TH: RRule.TH,
+  FR: RRule.FR,
+  SA: RRule.SA,
+  SU: RRule.SU,
+} as const;
+
+/**
+ * Build the RRule options from the form-level shape.
+ * Thrown errors here are caller-visible (modal shows them).
+ */
+function buildRRuleOptions(
+  args: CreateRecurringArgs,
+): { rule: RRule; until: Date | null } {
+  const dtstart = new Date(args.startDate + "T00:00:00Z");
+  if (isNaN(dtstart.getTime())) throw new Error("Неверная дата начала");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opts: Record<string, any> = { dtstart };
+
+  if (args.pattern === "weekly") {
+    const days = (args.weekdays ?? [])
+      .map((k) => WEEKDAY_MAP[k as keyof typeof WEEKDAY_MAP])
+      .filter(Boolean);
+    if (!days.length) throw new Error("Выбери хотя бы один день недели");
+    opts.freq = RRule.WEEKLY;
+    opts.interval = Math.max(1, args.weekInterval ?? 1);
+    opts.byweekday = days;
+  } else if (args.pattern === "monthly") {
+    const days = (args.monthDays ?? []).filter((n) => n >= 1 && n <= 31);
+    if (!days.length) throw new Error("Выбери хотя бы одно число месяца");
+    opts.freq = RRule.MONTHLY;
+    opts.interval = Math.max(1, args.monthInterval ?? 1);
+    opts.bymonthday = days;
+  } else if (args.pattern === "interval") {
+    opts.freq = RRule.DAILY;
+    opts.interval = Math.max(1, args.dayInterval ?? 1);
+  } else {
+    opts.freq = RRule.YEARLY;
+    opts.interval = Math.max(1, args.yearInterval ?? 1);
+  }
+
+  let until: Date | null = null;
+  if (args.endType === "date" && args.endDate) {
+    until = new Date(args.endDate + "T23:59:59Z");
+    if (isNaN(until.getTime()) || until <= dtstart) {
+      throw new Error("Неверная дата окончания");
+    }
+    opts.until = until;
+  } else if (args.endType === "count" && args.endCount) {
+    const c = args.endCount;
+    if (c < 1 || c > 500) throw new Error("Количество должно быть 1–500");
+    opts.count = c;
+  } else {
+    throw new Error("Укажи условие окончания");
+  }
+
+  return { rule: new RRule(opts), until };
+}
+
+/**
+ * Offline-first recurring task creation. Writes template + all occurrences
+ * to Dexie in a single transaction, enqueues N+1 inserts in the outbox.
+ *
+ * The template carries `rrule` + `status='done'` so it stays hidden from
+ * active lists. /done filters templates out via `rrule != null`.
+ *
+ * Returns { templateId, count } so the modal can display feedback.
+ */
+export async function createRecurringTaskLocal(
+  args: CreateRecurringArgs,
+): Promise<{ templateId: string; count: number }> {
+  const { rule, until } = buildRRuleOptions(args);
+  const dates = rule.all();
+  if (!dates.length) throw new Error("Нет ни одного вхождения");
+  if (dates.length > 500) {
+    throw new Error(`Слишком много вхождений (${dates.length}); сократи диапазон`);
+  }
+
+  const title = args.title.trim();
+  if (!title) throw new Error("Название не должно быть пустым");
+
+  const templateId = uuid();
+  const nowIso = now();
+  const rruleStr = rule.toString();
+  const rruleUntil = until ? until.toISOString() : null;
+  const overdueAction = args.overdueAction ?? null;
+  const projectId = args.projectId ?? null;
+
+  const template: TaskRow = {
+    id: templateId,
+    user_id: args.userId,
+    sphere_id: args.sphereId,
+    project_id: projectId,
+    parent_id: null,
+    title,
+    description: null,
+    status: "done", // hidden from active lists
+    due_at: null,
+    remind_at: null,
+    rrule: rruleStr,
+    rrule_until: rruleUntil,
+    order: 0,
+    carry_count: 0,
+    completed_at: null,
+    created_at: nowIso,
+    updated_at: nowIso,
+    deleted_at: null,
+    overdue_action: overdueAction,
+  };
+
+  const occurrences: TaskRow[] = dates.map((d) => ({
+    id: uuid(),
+    user_id: args.userId,
+    sphere_id: args.sphereId,
+    project_id: projectId,
+    parent_id: templateId,
+    title,
+    description: null,
+    status: "todo",
+    due_at: new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+    ).toISOString(),
+    remind_at: null,
+    rrule: null,
+    rrule_until: null,
+    order: 0,
+    carry_count: 0,
+    completed_at: null,
+    created_at: nowIso,
+    updated_at: nowIso,
+    deleted_at: null,
+    overdue_action: overdueAction,
+  }));
+
+  const db = localDb();
+  // Single transaction: all rows visible at once or none.
+  await db.transaction("rw", db.task, db.outbox, async () => {
+    await db.task.bulkPut([template, ...occurrences]);
+    // enqueueMutation has a collapse step that runs its own writes;
+    // inlining the inserts here avoids the extra round-trip per row.
+    await db.outbox.bulkAdd([
+      {
+        op: "insert",
+        table: "task",
+        row_id: template.id,
+        payload: template as unknown as Record<string, unknown>,
+        created_at: Date.now(),
+        attempts: 0,
+      },
+      ...occurrences.map((o) => ({
+        op: "insert" as const,
+        table: "task" as const,
+        row_id: o.id,
+        payload: o as unknown as Record<string, unknown>,
+        created_at: Date.now(),
+        attempts: 0,
+      })),
+    ]);
+  });
+
+  void runSync();
+  return { templateId, count: occurrences.length };
 }
 
 // ---------------- Sphere / Project (basic) ----------------

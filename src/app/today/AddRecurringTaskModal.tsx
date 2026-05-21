@@ -3,8 +3,8 @@
 import { useRef, useState, useMemo } from "react";
 import { RRule } from "rrule";
 import { format } from "date-fns";
-import { createRecurringTask } from "@/app/spheres/actions";
-import { runSync } from "@/lib/local/sync";
+import { createRecurringTaskLocal } from "@/lib/local/mutations";
+import { useUserId } from "@/lib/local/useUser";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string; sphere_id: string };
@@ -29,6 +29,7 @@ export function AddRecurringTaskModal({
   todayDefault: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const userId = useUserId();
 
   const [title, setTitle] = useState("");
   const [sphereId, setSphereId] = useState("");
@@ -126,32 +127,31 @@ export function AddRecurringTaskModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!preview.length) return;
+    if (!userId) {
+      setError("Нет авторизации");
+      return;
+    }
     setPending(true);
     setError(null);
     try {
-      const fd = new FormData();
-      fd.append("title", title);
-      fd.append("sphereId", sphereId);
-      if (projectId) fd.append("projectId", projectId);
-      fd.append("pattern", pattern);
-      fd.append("startDate", startDate);
-      fd.append("endType", endType);
-      if (endType === "date") fd.append("endDate", endDate);
-      else fd.append("endCount", String(endCount));
-      if (pattern === "weekly") {
-        fd.append("weekdays", weekdays.join(","));
-        fd.append("weekInterval", String(weekInterval));
-      } else if (pattern === "monthly") {
-        fd.append("monthDays", monthDays.join(","));
-        fd.append("monthInterval", String(monthInterval));
-      } else if (pattern === "interval") {
-        fd.append("dayInterval", String(dayInterval));
-      } else {
-        fd.append("yearInterval", String(yearInterval));
-      }
-      if (overdueAction) fd.append("overdueAction", overdueAction);
-      await createRecurringTask(fd);
-      await runSync();
+      await createRecurringTaskLocal({
+        userId,
+        title,
+        sphereId,
+        projectId: projectId || null,
+        pattern,
+        startDate,
+        endType,
+        endDate: endType === "date" ? endDate : null,
+        endCount: endType === "count" ? endCount : null,
+        weekdays: pattern === "weekly" ? weekdays : undefined,
+        weekInterval: pattern === "weekly" ? weekInterval : undefined,
+        monthDays: pattern === "monthly" ? monthDays : undefined,
+        monthInterval: pattern === "monthly" ? monthInterval : undefined,
+        dayInterval: pattern === "interval" ? dayInterval : undefined,
+        yearInterval: pattern === "yearly" ? yearInterval : undefined,
+        overdueAction: overdueAction === "reschedule" ? "reschedule" : null,
+      });
       resetForm();
       dialogRef.current?.close();
     } catch (err) {

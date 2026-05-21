@@ -79,10 +79,26 @@ async function pushOutbox(): Promise<{ ok: number; fail: number; dead: number }>
   for (const entry of entries) {
     try {
       if (entry.op === "insert" || entry.op === "update") {
-        const { error } = await supabase
-          .from(entry.table)
-          .upsert(entry.payload as never, { onConflict: "id" });
-        if (error) throw error;
+        // Use the LWW-guarded RPC: server rejects payload older than the
+        // existing row. Falls back to a plain upsert if RPC missing,
+        // because Supabase returns a specific error code we can detect.
+        const fn = `upsert_${entry.table}_if_newer`;
+        const { error } = await supabase.rpc(fn, {
+          payload: entry.payload,
+        });
+        if (error) {
+          // 42883 = function does not exist (RPC not deployed yet).
+          // Fallback so the client still works against a stale schema.
+          const code = (error as { code?: string }).code;
+          if (code === "42883" || /does not exist/i.test(error.message)) {
+            const { error: upErr } = await supabase
+              .from(entry.table)
+              .upsert(entry.payload as never, { onConflict: "id" });
+            if (upErr) throw upErr;
+          } else {
+            throw error;
+          }
+        }
       } else if (entry.op === "delete") {
         const { error } = await supabase
           .from(entry.table)
@@ -128,42 +144,87 @@ async function pushOutbox(): Promise<{ ok: number; fail: number; dead: number }>
   return { ok, fail, dead };
 }
 
+const PULL_PAGE = 1000;
+const PULL_SAFETY_PAGES = 50; // up to 50k rows per table per sync
+
+/**
+ * Incremental pull with safe pagination.
+ *
+ * The cursor is `updated_at`, but multiple rows can share the same value
+ * (bulk insert -> postgres `now()` is constant within a transaction).
+ * Using `gt(cursor)` skips ties on page boundaries -> data loss.
+ *
+ * Approach: query `gte(cursor)`, track already-applied row ids during this
+ * sync run, and advance the cursor by epsilon only when the entire page
+ * shares one timestamp (otherwise advance to max(updated_at) - epsilon and
+ * let the next iteration re-fetch the tie group, deduped by `seen`).
+ */
 async function pullTable(table: OutboxTable): Promise<number> {
   const db = localDb();
   const supabase = createClient();
   const metaKey = `last_sync_at:${table}`;
-  const last = (await getMeta(metaKey)) ?? "1970-01-01T00:00:00Z";
+  let cursor = (await getMeta(metaKey)) ?? "1970-01-01T00:00:00Z";
 
-  const { data, error } = await supabase
-    .from(table)
-    .select("*")
-    .gt("updated_at", last)
-    .order("updated_at", { ascending: true })
-    .limit(1000);
+  const seen = new Set<string>();
+  let total = 0;
 
-  if (error) throw error;
-  if (!data || data.length === 0) return 0;
+  for (let page = 0; page < PULL_SAFETY_PAGES; page++) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .gte("updated_at", cursor)
+      .order("updated_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(PULL_PAGE);
 
-  // Upsert into Dexie, removing soft-deleted
-  const toDelete: string[] = [];
-  const toPut: typeof data = [];
-  let maxUpdated = last;
-  for (const row of data as Array<{
-    id: string;
-    updated_at: string;
-    deleted_at: string | null;
-  }>) {
-    if (row.updated_at > maxUpdated) maxUpdated = row.updated_at;
-    if (row.deleted_at) toDelete.push(row.id);
-    else toPut.push(row);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    const toDelete: string[] = [];
+    const toPut: typeof data = [];
+    let pageMax = cursor;
+    let pageMin = cursor;
+    let newRows = 0;
+    for (const row of data as Array<{
+      id: string;
+      updated_at: string;
+      deleted_at: string | null;
+    }>) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      newRows++;
+      if (row.updated_at > pageMax) pageMax = row.updated_at;
+      if (pageMin === cursor || row.updated_at < pageMin) pageMin = row.updated_at;
+      if (row.deleted_at) toDelete.push(row.id);
+      else toPut.push(row);
+    }
+
+    const tbl = db.table(table);
+    if (toPut.length) await tbl.bulkPut(toPut);
+    if (toDelete.length) await tbl.bulkDelete(toDelete);
+    total += newRows;
+
+    // Less than a full page or no new rows -> done.
+    if (data.length < PULL_PAGE || newRows === 0) {
+      cursor = pageMax > cursor ? pageMax : cursor;
+      break;
+    }
+
+    // Full page. If the entire page shared one timestamp (tie cluster
+    // bigger than PULL_PAGE), advance cursor by 1ms to escape the tie —
+    // accepting the theoretical loss only for clusters > PULL_PAGE+the next.
+    // Otherwise re-fetch from pageMax: ties at the boundary will be
+    // deduped by `seen`.
+    if (pageMax === pageMin) {
+      const next = new Date(new Date(pageMax).getTime() + 1).toISOString();
+      cursor = next;
+    } else {
+      cursor = pageMax;
+    }
   }
 
-  const tbl = db.table(table);
-  if (toPut.length) await tbl.bulkPut(toPut);
-  if (toDelete.length) await tbl.bulkDelete(toDelete);
-
-  await setMeta(metaKey, maxUpdated);
-  return data.length;
+  await setMeta(metaKey, cursor);
+  return total;
 }
 
 export async function runSync(): Promise<{
