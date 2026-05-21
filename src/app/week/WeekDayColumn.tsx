@@ -1,18 +1,10 @@
 "use client";
 
 import { useRef } from "react";
-import { CheckSquare, Square } from "lucide-react";
-import { toggleTask, createTask } from "@/app/spheres/actions";
-import type { TaskStatus } from "@/lib/db";
-
-type Row = {
-  id: string;
-  title: string;
-  status: TaskStatus;
-  due_at: string | null;
-  carry_count: number;
-  sphere: { name: string; color: string; icon: string | null } | null;
-};
+import { useLiveQuery } from "dexie-react-hooks";
+import { createTask } from "@/app/spheres/actions";
+import { localDb } from "@/lib/local/db";
+import { TaskItem } from "@/components/TaskItem";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string };
@@ -21,22 +13,47 @@ export function WeekDayColumn({
   dayLabel,
   dayKey,
   today,
-  tasks,
   spheres,
   projects,
 }: {
   dayLabel: string;
   dayKey: string;
   today: boolean;
-  tasks: Row[];
   spheres: Sphere[];
   projects: Project[];
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const data = useLiveQuery(async () => {
+    const db = localDb();
+    const [tasks, allSpheres, allProjects] = await Promise.all([
+      db.task.toArray(),
+      db.sphere.toArray(),
+      db.project.toArray(),
+    ]);
+    const sphereById = new Map(allSpheres.map((s) => [s.id, s]));
+    const projectById = new Map(allProjects.map((p) => [p.id, p]));
+    const dayStartMs = new Date(`${dayKey}T00:00:00`).getTime();
+    const dayEndMs = new Date(`${dayKey}T23:59:59.999`).getTime();
+    const dayTasks = tasks
+      .filter(
+        (t) =>
+          !t.deleted_at &&
+          t.due_at &&
+          new Date(t.due_at).getTime() >= dayStartMs &&
+          new Date(t.due_at).getTime() <= dayEndMs,
+      )
+      .sort((a, b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
+    return { dayTasks, sphereById, projectById };
+  }, [dayKey]);
+
+  const tasks = data?.dayTasks ?? [];
+  const sphereById = data?.sphereById ?? new Map();
+  const projectById = data?.projectById ?? new Map();
+
   return (
     <div
-      className={`min-h-32 rounded-lg border p-2 space-y-1 ${
+      className={`min-h-32 space-y-1.5 rounded-lg border p-2 ${
         today
           ? "border-neutral-900 dark:border-neutral-100"
           : "border-neutral-200 dark:border-neutral-800"
@@ -45,14 +62,16 @@ export function WeekDayColumn({
       <div className="flex items-center justify-between gap-1">
         <p
           className={`text-sm font-semibold ${
-            today ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-500"
+            today
+              ? "text-neutral-900 dark:text-neutral-100"
+              : "text-neutral-500"
           }`}
         >
           {dayLabel}
         </p>
         <button
           onClick={() => dialogRef.current?.showModal()}
-          className="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 dark:hover:text-neutral-100 dark:hover:bg-neutral-800 text-sm leading-none"
+          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-sm leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
           title="Добавить задачу"
         >
           +
@@ -60,41 +79,13 @@ export function WeekDayColumn({
       </div>
 
       {tasks.map((t) => (
-        <div key={t.id} className="flex items-start gap-1">
-          <form action={toggleTask.bind(null, t.id, t.status !== "done")}>
-            <button
-              type="submit"
-              className="mt-0.5 text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 flex-shrink-0"
-            >
-              {t.status === "done" ? <CheckSquare size={12} /> : <Square size={12} />}
-            </button>
-          </form>
-          <span
-            className={`flex-1 text-xs leading-tight min-w-0 break-words ${
-              t.status === "done" ? "line-through text-neutral-400" : ""
-            }`}
-          >
-            {t.title}
-            {t.carry_count > 0 && (
-              <span className="ml-1 text-amber-500" title={`Перенесено ${t.carry_count} раз`}>
-                ↩
-              </span>
-            )}
-          </span>
-          {t.sphere && (
-            t.sphere.icon ? (
-              <span className="text-xs flex-shrink-0 leading-none mt-0.5" title={t.sphere.name}>
-                {t.sphere.icon}
-              </span>
-            ) : (
-              <span
-                className="inline-block w-2 h-2 rounded-full flex-shrink-0 mt-1"
-                style={{ background: t.sphere.color }}
-                title={t.sphere.name}
-              />
-            )
-          )}
-        </div>
+        <TaskItem
+          key={t.id}
+          task={t}
+          sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+          project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+          showDate={false}
+        />
       ))}
 
       {tasks.length === 0 && (
@@ -131,7 +122,7 @@ export function WeekDayColumn({
             <select
               name="sphereId"
               required
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+              className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <option value="">— выберите сферу —</option>
               {spheres.map((s) => (
@@ -144,10 +135,12 @@ export function WeekDayColumn({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Проект (необязательно)</label>
+            <label className="text-xs text-neutral-500">
+              Проект (необязательно)
+            </label>
             <select
               name="projectId"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+              className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <option value="">— без проекта —</option>
               {projects.map((p) => (

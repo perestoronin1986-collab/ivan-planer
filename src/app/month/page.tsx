@@ -83,7 +83,6 @@ export default async function MonthPage({
         ? format(now, "yyyy-MM-dd")
         : format(monthStart, "yyyy-MM-dd");
   const selectedDate = parseISO(selectedKey);
-  const selectedTasks = tasksByDay.get(selectedKey) ?? [];
   const selectedLabel = format(selectedDate, "EEEE, d MMMM", { locale: ru });
 
   const monthLabel = format(monthAnchor, "LLLL yyyy", { locale: ru });
@@ -166,7 +165,6 @@ export default async function MonthPage({
           dayLabel={selectedLabel}
           dayKey={selectedKey}
           today={isToday(selectedDate)}
-          tasks={selectedTasks}
           spheres={spheres}
           projects={projects}
         />
