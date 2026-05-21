@@ -57,7 +57,6 @@ export default function InboxPage() {
       </div>
 
       <QuickCapture
-        disabled={!userId}
         onAdd={async (content) => {
           if (!userId) return;
           await addInboxItemLocal(userId, content);
@@ -109,20 +108,18 @@ export default function InboxPage() {
 }
 
 function QuickCapture({
-  disabled,
   onAdd,
 }: {
-  disabled: boolean;
   onAdd: (content: string) => Promise<void>;
 }) {
   const [value, setValue] = useState("");
+  const trimmed = value.trim();
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        const v = value.trim();
-        if (!v) return;
-        await onAdd(v);
+        if (!trimmed) return;
+        await onAdd(trimmed);
         setValue("");
       }}
       className="flex gap-2"
@@ -130,14 +127,13 @@ function QuickCapture({
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        required
         placeholder="Запиши мысль, идею, задачу…"
         autoFocus
         className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
       />
       <button
         type="submit"
-        disabled={disabled}
+        disabled={!trimmed}
         className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
       >
         Записать
