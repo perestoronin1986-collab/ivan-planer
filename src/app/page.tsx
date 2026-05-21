@@ -32,6 +32,7 @@ export default async function Home() {
           { href: "/tasks", label: "Все активные задачи" },
           { href: "/recurring", label: "Регулярные задачи" },
           { href: "/done", label: "Выполненные задачи" },
+          { href: "/settings", label: "Настройки" },
         ].map((item) => (
           <Link
             key={item.href}
