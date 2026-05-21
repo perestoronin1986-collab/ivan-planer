@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CheckSquare, Square, Pencil, Trash2, Check, X } from "lucide-react";
+import { CheckSquare, Square, Pencil, Check, X } from "lucide-react";
 import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 import {
   toggleTaskStatusLocal,
   updateTaskLocal,
   deleteTaskLocal,
 } from "@/lib/local/mutations";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 
 type SphereLite = Pick<SphereRow, "id" | "name" | "color" | "icon">;
 type ProjectLite = Pick<ProjectRow, "id" | "name">;
@@ -159,16 +160,14 @@ export function TaskItem({
           {!sphere && !project && !task.due_at && (
             <span className="text-neutral-300 dark:text-neutral-700">—</span>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              if (confirm("Удалить задачу?")) deleteTaskLocal(task.id);
-            }}
-            className="ml-auto flex-shrink-0 text-neutral-300 hover:text-red-500"
-            aria-label="Удалить"
-          >
-            <Trash2 size={14} />
-          </button>
+          <div className="ml-auto flex-shrink-0">
+            <ConfirmDeleteButton
+              onConfirm={() => deleteTaskLocal(task.id)}
+              message="Удалить задачу?"
+              description={task.title}
+              className="text-neutral-300 hover:text-red-500"
+            />
+          </div>
         </div>
       </div>
     </div>

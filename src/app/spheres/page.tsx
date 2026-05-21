@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import type { SphereRow } from "@/lib/db";
-import { createSphere, deleteSphere } from "./actions";
-import { Trash2 } from "lucide-react";
+import { createSphere } from "./actions";
+import { SphereDeleteButton } from "@/components/SphereDeleteButton";
 
 export default async function SpheresPage() {
   await requireUser();
@@ -34,11 +34,7 @@ export default async function SpheresPage() {
               {s.icon && <span className="mr-2">{s.icon}</span>}
               {s.name}
             </Link>
-            <form action={deleteSphere.bind(null, s.id)}>
-              <button type="submit" className="text-neutral-400 hover:text-red-500">
-                <Trash2 size={16} />
-              </button>
-            </form>
+            <SphereDeleteButton id={s.id} name={s.name} />
           </div>
         ))}
 

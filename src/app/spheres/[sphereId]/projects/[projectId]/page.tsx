@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import type { SphereRow, ProjectRow } from "@/lib/db";
-import { createTask, deleteProject } from "@/app/spheres/actions";
-import { Trash2 } from "lucide-react";
+import { createTask } from "@/app/spheres/actions";
+import { ProjectDeleteButton } from "@/components/ProjectDeleteButton";
 import { OverdueActionSelect } from "@/components/OverdueActionSelect";
 import { ProjectTasksList } from "./ProjectTasksList";
 
@@ -37,14 +37,13 @@ export default async function ProjectPage({
           <h1 className="min-w-0 break-words text-2xl font-semibold">
             {p.name}
           </h1>
-          <form action={deleteProject.bind(null, projectId, sphereId)}>
-            <button
-              type="submit"
-              className="mt-1 flex-shrink-0 text-neutral-400 hover:text-red-500"
-            >
-              <Trash2 size={18} />
-            </button>
-          </form>
+          <div className="mt-1 flex-shrink-0">
+            <ProjectDeleteButton
+              projectId={projectId}
+              sphereId={sphereId}
+              name={p.name}
+            />
+          </div>
         </div>
         <Link
           href={`/spheres/${sphereId}`}

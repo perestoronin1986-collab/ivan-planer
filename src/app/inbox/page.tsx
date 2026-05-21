@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Trash2 } from "lucide-react";
 import { localDb } from "@/lib/local/db";
 import {
   addInboxItemLocal,
@@ -11,6 +10,7 @@ import {
   processInboxToTaskLocal,
 } from "@/lib/local/mutations";
 import { useUserId } from "@/lib/local/useUser";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 
 export default function InboxPage() {
   const userId = useUserId();
@@ -96,14 +96,11 @@ export default function InboxPage() {
               }}
             />
 
-            <button
-              type="button"
-              onClick={() => deleteInboxItemLocal(item.id)}
-              className="text-neutral-400 hover:text-red-500"
-              aria-label="Удалить"
-            >
-              <Trash2 size={14} />
-            </button>
+            <ConfirmDeleteButton
+              onConfirm={() => deleteInboxItemLocal(item.id)}
+              message="Удалить запись из Inbox?"
+              description={item.content}
+            />
           </div>
         ))}
       </div>
