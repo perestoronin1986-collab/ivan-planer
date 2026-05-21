@@ -173,12 +173,7 @@ export async function toggleTaskStatusLocal(id: string): Promise<void> {
   const db = localDb();
   const existing = await db.task.get(id);
   if (!existing) return;
-  const nextStatus =
-    existing.status === "done"
-      ? "todo"
-      : existing.status === "todo"
-        ? "doing"
-        : "done";
+  const nextStatus = existing.status === "done" ? "todo" : "done";
   await updateTaskLocal(id, {
     status: nextStatus,
     completed_at: nextStatus === "done" ? now() : null,
