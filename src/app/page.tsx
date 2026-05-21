@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/server";
 import { signOut } from "./actions";
+import { OnlineIndicator } from "@/components/OnlineIndicator";
 
 export default async function Home() {
   const user = await requireUser();
@@ -8,7 +9,10 @@ export default async function Home() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 p-6">
       <header className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold">IvanPlaner</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">IvanPlaner</h1>
+          <OnlineIndicator />
+        </div>
         <form action={signOut} className="flex items-center gap-3">
           <span className="text-sm text-neutral-500">{user.email}</span>
           <button className="text-sm underline">выйти</button>
