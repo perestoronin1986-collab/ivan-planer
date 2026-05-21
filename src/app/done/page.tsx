@@ -5,9 +5,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
 import { TaskItem } from "@/components/TaskItem";
-import type { TaskRow } from "@/lib/db";
 
-export default function TasksPage() {
+export default function DonePage() {
   const userId = useUserId();
 
   const data = useLiveQuery(async () => {
@@ -19,18 +18,14 @@ export default function TasksPage() {
     ]);
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
-    const live = tasks
-      .filter((t) => !t.deleted_at)
-      .sort((a, b) => {
-        if (a.status !== b.status) {
-          return statusRank(a.status) - statusRank(b.status);
-        }
-        if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
-        if (a.due_at) return -1;
-        if (b.due_at) return 1;
-        return b.created_at.localeCompare(a.created_at);
-      });
-    return { live, sphereById, projectById };
+    const done = tasks
+      .filter((t) => !t.deleted_at && t.status === "done")
+      .sort((a, b) =>
+        (b.completed_at ?? b.updated_at).localeCompare(
+          a.completed_at ?? a.updated_at,
+        ),
+      );
+    return { done, sphereById, projectById };
   });
 
   if (userId === undefined) {
@@ -44,10 +39,9 @@ export default function TasksPage() {
     );
   }
 
-  const tasks = data?.live ?? [];
+  const done = data?.done ?? [];
   const sphereById = data?.sphereById ?? new Map();
   const projectById = data?.projectById ?? new Map();
-  const todo = tasks.filter((t) => t.status !== "done");
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-6">
@@ -55,11 +49,11 @@ export default function TasksPage() {
         <Link href="/" className="text-sm text-neutral-500 hover:underline">
           ← главная
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Все активные задачи</h1>
+        <h1 className="mt-1 text-2xl font-semibold">Выполненные задачи</h1>
       </div>
 
       <section className="space-y-1.5">
-        {todo.map((t) => (
+        {done.map((t) => (
           <TaskItem
             key={t.id}
             task={t}
@@ -67,18 +61,12 @@ export default function TasksPage() {
             project={t.project_id ? projectById.get(t.project_id) ?? null : null}
           />
         ))}
-        {todo.length === 0 && (
+        {data && done.length === 0 && (
           <p className="py-4 text-center text-sm text-neutral-500">
-            Все задачи выполнены!
+            Пока ничего не выполнено.
           </p>
         )}
       </section>
     </main>
   );
-}
-
-function statusRank(s: TaskRow["status"]): number {
-  if (s === "doing") return 0;
-  if (s === "todo") return 1;
-  return 2;
 }
