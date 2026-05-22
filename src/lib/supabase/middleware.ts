@@ -36,9 +36,20 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Network unavailable — fall back to reading the session cookie directly
+    // so offline users aren't redirected to login
+    const sessionCookie = request.cookies.getAll().find(
+      (c) => c.name.includes("auth-token") || c.name.startsWith("sb-"),
+    );
+    if (sessionCookie) {
+      user = {} as NonNullable<typeof user>;
+    }
+  }
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
