@@ -6,7 +6,7 @@
 //   - Supabase API: bypass (online-only; Dexie keeps local copy)
 //   - Push: forward to Notifications API
 
-const VERSION = "v2-offline-2026-05-21";
+const VERSION = "v3-offline-2026-05-22";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
