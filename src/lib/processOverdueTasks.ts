@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { startOfDay, startOfTomorrow } from "date-fns";
+import { startOfDay } from "date-fns";
 
 export async function processOverdueTasks(supabase: SupabaseClient) {
   const now = new Date().toISOString();
@@ -22,11 +22,11 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
     .filter((t) => t.overdue_action === "autocomplete")
     .map((t) => t.id);
 
-  const tomorrow = startOfTomorrow().toISOString();
+  const today = startOfDay(new Date()).toISOString();
 
   if (toReschedule.length) {
     await Promise.all([
-      supabase.from("task").update({ due_at: tomorrow }).in("id", toReschedule),
+      supabase.from("task").update({ due_at: today }).in("id", toReschedule),
       supabase.rpc("increment_carry_count", { task_ids: toReschedule }),
     ]);
   }
