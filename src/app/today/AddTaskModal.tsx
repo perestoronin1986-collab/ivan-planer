@@ -13,10 +13,14 @@ export function AddTaskModal({
   spheres,
   projects,
   todayDefault,
+  triggerChildren,
+  triggerClassName,
 }: {
   spheres: Sphere[];
   projects: Project[];
   todayDefault: string;
+  triggerChildren?: React.ReactNode;
+  triggerClassName?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const userId = useUserId();
@@ -85,9 +89,9 @@ export function AddTaskModal({
           reset();
           dialogRef.current?.showModal();
         }}
-        className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+        className={triggerClassName ?? "rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"}
       >
-        + Новая задача
+        {triggerChildren ?? "+ Новая задача"}
       </button>
 
       <dialog

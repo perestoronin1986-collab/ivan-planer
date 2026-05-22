@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
 import { TaskItem } from "@/components/TaskItem";
+import { AddTaskModal } from "@/app/today/AddTaskModal";
 import type { TaskRow } from "@/lib/db";
 
 export default function TasksPage() {
@@ -51,13 +52,26 @@ export default function TasksPage() {
   const projectById = data?.projectById ?? new Map();
   const todo = tasks.filter((t) => t.status !== "done");
 
+  const spheres = data ? Array.from(data.sphereById.values()).map((s) => ({ id: s.id, name: s.name, icon: s.icon ?? null })) : [];
+  const projects = data ? Array.from(data.projectById.values()).map((p) => ({ id: p.id, name: p.name })) : [];
+  const todayDefault = new Date().toISOString().slice(0, 10);
+
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-6">
       <div>
         <Link href="/" className="text-sm text-neutral-500 hover:underline">
           ← главная
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Все активные задачи</h1>
+        <div className="mt-1 flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">Все активные задачи</h1>
+          <AddTaskModal
+            spheres={spheres}
+            projects={projects}
+            todayDefault={todayDefault}
+            triggerChildren={<span className="text-3xl font-black leading-none">+</span>}
+            triggerClassName="flex items-center justify-center w-9 h-9 rounded-full bg-violet-600 text-white hover:bg-violet-700 shadow"
+          />
+        </div>
       </div>
 
       <section className="space-y-1.5">

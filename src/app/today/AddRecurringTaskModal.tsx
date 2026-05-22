@@ -23,10 +23,14 @@ export function AddRecurringTaskModal({
   spheres,
   projects,
   todayDefault,
+  triggerChildren,
+  triggerClassName,
 }: {
   spheres: Sphere[];
   projects: Project[];
   todayDefault: string;
+  triggerChildren?: React.ReactNode;
+  triggerClassName?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const userId = useUserId();
@@ -180,9 +184,9 @@ export function AddRecurringTaskModal({
     <>
       <button
         onClick={() => dialogRef.current?.showModal()}
-        className="rounded border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className={triggerClassName ?? "rounded border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"}
       >
-        ↻ Регулярная задача
+        {triggerChildren ?? "↻ Регулярная задача"}
       </button>
 
       <dialog
