@@ -8,16 +8,18 @@ export default async function Home() {
   const user = await requireUser();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-3 bg-gray-100 p-4">
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-2 bg-gray-100 p-3">
       {/* Header */}
-      <header className="flex items-center justify-between pb-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-gray-900">IvanPlaner</h1>
-          <OnlineIndicator />
-          <SyncHealth />
-        </div>
-        <form action={signOut} className="flex items-center gap-2">
+      <header className="flex items-start justify-between pb-1">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-900">IvanPlaner</h1>
+            <OnlineIndicator />
+            <SyncHealth />
+          </div>
           <span className="text-xs text-gray-400">{user.email}</span>
+        </div>
+        <form action={signOut} className="mt-1">
           <button className="text-xs text-gray-400 underline">выйти</button>
         </form>
       </header>
@@ -28,7 +30,7 @@ export default async function Home() {
           background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
           border: "1.5px solid #a78bfa",
           borderRadius: "20px",
-          padding: "16px",
+          padding: "12px",
           boxShadow: "0 4px 20px rgba(139,92,246,0.2)",
         }}
       >
@@ -39,25 +41,25 @@ export default async function Home() {
             fontWeight: 700,
             letterSpacing: "1px",
             textTransform: "uppercase",
-            marginBottom: "12px",
+            marginBottom: "8px",
           }}
         >
           📅 Планирование
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
           <Link
             href="/today"
             style={{
               background: "linear-gradient(135deg, #7c3aed, #8b5cf6)",
               borderRadius: "14px",
-              padding: "18px 12px",
+              padding: "13px 10px",
               textAlign: "center",
               display: "block",
               boxShadow: "0 4px 15px rgba(124,58,237,0.4)",
               textDecoration: "none",
             }}
           >
-            <div style={{ fontSize: "22px", marginBottom: "4px" }}>☀️</div>
+            <div style={{ fontSize: "18px", marginBottom: "2px" }}>☀️</div>
             <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>Сегодня</div>
           </Link>
           <Link
@@ -66,14 +68,14 @@ export default async function Home() {
               background: "#fff",
               border: "1.5px solid #c4b5fd",
               borderRadius: "14px",
-              padding: "18px 12px",
+              padding: "13px 10px",
               textAlign: "center",
               display: "block",
               boxShadow: "0 2px 8px rgba(139,92,246,0.12)",
               textDecoration: "none",
             }}
           >
-            <div style={{ fontSize: "22px", marginBottom: "4px" }}>📆</div>
+            <div style={{ fontSize: "18px", marginBottom: "2px" }}>📆</div>
             <div style={{ color: "#6d28d9", fontSize: "14px", fontWeight: 600 }}>Неделя</div>
           </Link>
         </div>
@@ -83,7 +85,7 @@ export default async function Home() {
             background: "#fff",
             border: "1px solid #ddd6fe",
             borderRadius: "14px",
-            padding: "12px",
+            padding: "8px",
             textAlign: "center",
             display: "block",
             width: "50%",
@@ -101,7 +103,7 @@ export default async function Home() {
           background: "#fff",
           border: "1px solid #e5e7eb",
           borderRadius: "20px",
-          padding: "16px",
+          padding: "12px",
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
         }}
       >
@@ -112,7 +114,7 @@ export default async function Home() {
             fontWeight: 700,
             letterSpacing: "1px",
             textTransform: "uppercase",
-            marginBottom: "12px",
+            marginBottom: "8px",
           }}
         >
           🏗 Структура
@@ -129,13 +131,13 @@ export default async function Home() {
                 background: "#faf5ff",
                 border: "1px solid #e9d5ff",
                 borderRadius: "14px",
-                padding: "16px 12px",
+                padding: "11px 10px",
                 textAlign: "center",
                 display: "block",
                 textDecoration: "none",
               }}
             >
-              <div style={{ fontSize: "20px", marginBottom: "4px" }}>{item.emoji}</div>
+              <div style={{ fontSize: "16px", marginBottom: "2px" }}>{item.emoji}</div>
               <div style={{ color: "#4c1d95", fontSize: "13px", fontWeight: 500 }}>{item.label}</div>
             </Link>
           ))}
@@ -148,7 +150,7 @@ export default async function Home() {
           background: "#fff",
           border: "1px solid #e5e7eb",
           borderRadius: "20px",
-          padding: "16px",
+          padding: "12px",
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
         }}
       >
@@ -159,12 +161,12 @@ export default async function Home() {
             fontWeight: 700,
             letterSpacing: "1px",
             textTransform: "uppercase",
-            marginBottom: "12px",
+            marginBottom: "8px",
           }}
         >
           ✅ Задачи
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
           {[
             { href: "/tasks", emoji: "⚡", label: "Активные" },
             { href: "/recurring", emoji: "🔄", label: "Регулярные" },
@@ -176,13 +178,13 @@ export default async function Home() {
                 background: "#faf5ff",
                 border: "1px solid #e9d5ff",
                 borderRadius: "14px",
-                padding: "16px 12px",
+                padding: "11px 10px",
                 textAlign: "center",
                 display: "block",
                 textDecoration: "none",
               }}
             >
-              <div style={{ fontSize: "20px", marginBottom: "4px" }}>{item.emoji}</div>
+              <div style={{ fontSize: "16px", marginBottom: "2px" }}>{item.emoji}</div>
               <div style={{ color: "#4c1d95", fontSize: "12px", fontWeight: 500 }}>{item.label}</div>
             </Link>
           ))}
@@ -193,7 +195,7 @@ export default async function Home() {
             background: "#faf5ff",
             border: "1px solid #ede9fe",
             borderRadius: "14px",
-            padding: "12px",
+            padding: "8px",
             textAlign: "center",
             display: "block",
             width: "50%",
@@ -211,7 +213,7 @@ export default async function Home() {
           background: "#fff",
           border: "1px solid #e5e7eb",
           borderRadius: "20px",
-          padding: "16px",
+          padding: "12px",
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
         }}
       >
@@ -227,13 +229,13 @@ export default async function Home() {
                 background: "#faf5ff",
                 border: "1px solid #e9d5ff",
                 borderRadius: "14px",
-                padding: "14px 12px",
+                padding: "10px 10px",
                 textAlign: "center",
                 display: "block",
                 textDecoration: "none",
               }}
             >
-              <div style={{ fontSize: "18px", marginBottom: "4px" }}>{item.emoji}</div>
+              <div style={{ fontSize: "15px", marginBottom: "2px" }}>{item.emoji}</div>
               <div style={{ color: "#7c3aed", fontSize: "12px", fontWeight: 500 }}>{item.label}</div>
             </Link>
           ))}
