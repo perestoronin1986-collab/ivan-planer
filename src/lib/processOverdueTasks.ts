@@ -14,22 +14,11 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
 
   if (!overdue?.length) return;
 
-  const toReschedule = overdue
-    .filter((t) => t.overdue_action === "reschedule")
-    .map((t) => t.id);
-
+  // "reschedule" = stay overdue every day until done; no due_at change needed.
+  // "autocomplete" = mark done automatically.
   const toComplete = overdue
     .filter((t) => t.overdue_action === "autocomplete")
     .map((t) => t.id);
-
-  const today = startOfDay(new Date()).toISOString();
-
-  if (toReschedule.length) {
-    await Promise.all([
-      supabase.from("task").update({ due_at: today }).in("id", toReschedule),
-      supabase.rpc("increment_carry_count", { task_ids: toReschedule }),
-    ]);
-  }
 
   if (toComplete.length) {
     await supabase
