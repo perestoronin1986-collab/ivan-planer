@@ -130,6 +130,7 @@ export async function addTaskLocal(args: {
   projectId?: string | null;
   parentId?: string | null;
   dueAt?: string | null;
+  overdueAction?: OverdueAction | null;
 }): Promise<TaskRow> {
   // Mirror server-side CHECK constraint `task_context_chk`.
   // Без этой проверки задача без контекста запишется в Dexie + outbox,
@@ -158,7 +159,7 @@ export async function addTaskLocal(args: {
     created_at: now(),
     updated_at: now(),
     deleted_at: null,
-    overdue_action: null,
+    overdue_action: args.overdueAction ?? null,
   };
   await localDb().task.put(row);
   await enqueueMutation("insert", "task", row.id, row);

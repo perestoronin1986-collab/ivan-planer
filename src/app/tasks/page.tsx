@@ -19,8 +19,10 @@ export default function TasksPage() {
     ]);
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
+    const templateIds = new Set(tasks.filter((t) => t.rrule).map((t) => t.id));
     const live = tasks
       .filter((t) => !t.deleted_at)
+      .filter((t) => !t.parent_id || templateIds.has(t.parent_id))
       .sort((a, b) => {
         if (a.status !== b.status) {
           return statusRank(a.status) - statusRank(b.status);
