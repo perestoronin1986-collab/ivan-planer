@@ -79,22 +79,36 @@ export default async function Home() {
             <div style={{ color: "#6d28d9", fontSize: "14px", fontWeight: 600 }}>Неделя</div>
           </Link>
         </div>
-        <Link
-          href="/month"
-          style={{
-            background: "#fff",
-            border: "1px solid #ddd6fe",
-            borderRadius: "14px",
-            padding: "8px",
-            textAlign: "center",
-            display: "block",
-            width: "50%",
-            margin: "0 auto",
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ color: "#8b5cf6", fontSize: "13px", fontWeight: 500 }}>🗓 Месяц</span>
-        </Link>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", width: "66%", margin: "0 auto" }}>
+          <Link
+            href="/month"
+            style={{
+              background: "#fff",
+              border: "1px solid #ddd6fe",
+              borderRadius: "14px",
+              padding: "8px",
+              textAlign: "center",
+              display: "block",
+              textDecoration: "none",
+            }}
+          >
+            <span style={{ color: "#8b5cf6", fontSize: "13px", fontWeight: 500 }}>🗓 Месяц</span>
+          </Link>
+          <Link
+            href="/year"
+            style={{
+              background: "#fff",
+              border: "1px solid #ddd6fe",
+              borderRadius: "14px",
+              padding: "8px",
+              textAlign: "center",
+              display: "block",
+              textDecoration: "none",
+            }}
+          >
+            <span style={{ color: "#8b5cf6", fontSize: "13px", fontWeight: 500 }}>📅 Год</span>
+          </Link>
+        </div>
       </section>
 
       {/* Block 2: Структура */}
