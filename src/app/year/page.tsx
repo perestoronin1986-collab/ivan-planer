@@ -21,7 +21,7 @@ export default function YearPage() {
 
     for (const t of tasks) {
       if (t.deleted_at) continue;
-      if (t.parent_id) continue;
+      if (t.rrule) continue;
 
       if (t.completed_at) {
         const d = new Date(t.completed_at);
