@@ -16,7 +16,13 @@ type SphereLite = {
   icon: string | null;
 };
 
-export function ProjectsList({ sphereList }: { sphereList: SphereLite[] }) {
+export function ProjectsList({
+  sphereList,
+  doneOnly = false,
+}: {
+  sphereList: SphereLite[];
+  doneOnly?: boolean;
+}) {
   const data = useLiveQuery(async () => {
     const db = localDb();
     const [projects, tasks, spheres] = await Promise.all([
@@ -27,7 +33,11 @@ export function ProjectsList({ sphereList }: { sphereList: SphereLite[] }) {
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
     const liveProjects = projects
-      .filter((p) => !p.deleted_at)
+      .filter((p) => {
+        if (p.deleted_at) return false;
+        if (doneOnly) return p.status === "done";
+        return p.status !== "done";
+      })
       .sort((a, b) => {
         const sa = statusRank(a.status);
         const sb = statusRank(b.status);
@@ -172,33 +182,35 @@ export function ProjectsList({ sphereList }: { sphereList: SphereLite[] }) {
               <p className="px-4 py-2 text-xs text-neutral-400">Нет задач</p>
             )}
 
-            <form
-              action={createTask}
-              className="flex flex-col gap-2 border-t border-neutral-100 px-4 py-2 dark:border-neutral-800 sm:flex-row"
-            >
-              <input type="hidden" name="projectId" value={p.id} />
-              <input type="hidden" name="sphereId" value={p.sphere_id} />
-              <input
-                name="title"
-                required
-                placeholder="+ новая задача…"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400 sm:flex-1"
-              />
-              <div className="flex gap-2">
+            {!doneOnly && (
+              <form
+                action={createTask}
+                className="flex flex-col gap-2 border-t border-neutral-100 px-4 py-2 dark:border-neutral-800 sm:flex-row"
+              >
+                <input type="hidden" name="projectId" value={p.id} />
+                <input type="hidden" name="sphereId" value={p.sphere_id} />
                 <input
-                  name="dueAt"
-                  type="date"
-                  className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+                  name="title"
+                  required
+                  placeholder="+ новая задача…"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400 sm:flex-1"
                 />
-                <OverdueActionSelect />
-                <button
-                  type="submit"
-                  className="rounded bg-neutral-900 px-3 py-1 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-                >
-                  Добавить
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-2">
+                  <input
+                    name="dueAt"
+                    type="date"
+                    className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+                  />
+                  <OverdueActionSelect />
+                  <button
+                    type="submit"
+                    className="rounded bg-neutral-900 px-3 py-1 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+                  >
+                    Добавить
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         );
       })}

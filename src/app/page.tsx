@@ -119,7 +119,7 @@ export default async function Home() {
         >
           🏗 Структура
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "6px" }}>
           {[
             { href: "/spheres", emoji: "🌐", label: "Сферы" },
             { href: "/projects", emoji: "📁", label: "Проекты" },
@@ -142,6 +142,22 @@ export default async function Home() {
             </Link>
           ))}
         </div>
+        <Link
+          href="/projects/done"
+          style={{
+            background: "#faf5ff",
+            border: "1px solid #ede9fe",
+            borderRadius: "14px",
+            padding: "8px",
+            textAlign: "center",
+            display: "block",
+            width: "50%",
+            margin: "0 auto",
+            textDecoration: "none",
+          }}
+        >
+          <span style={{ color: "#a78bfa", fontSize: "12px", fontWeight: 500 }}>✅ Выполненные проекты</span>
+        </Link>
       </section>
 
       {/* Block 3: Задачи */}
