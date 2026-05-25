@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, ChevronDown, ChevronRight } from "lucide-react";
 import { localDb } from "@/lib/local/db";
 import { TaskItem } from "@/components/TaskItem";
 import { SphereSelectorForm } from "@/components/SphereSelectorForm";
@@ -61,6 +62,8 @@ export function ProjectsList({
     }
     return { liveProjects, tasksByProject, sphereById, projectById };
   });
+
+  const [hiddenDone, setHiddenDone] = useState<Set<string>>(new Set());
 
   const projects = data?.liveProjects ?? [];
   const tasksByProject = data?.tasksByProject ?? new Map();
@@ -132,6 +135,28 @@ export function ProjectsList({
                 >
                   {p.name}
                 </Link>
+                {done.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHiddenDone((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(p.id)) next.delete(p.id);
+                        else next.add(p.id);
+                        return next;
+                      })
+                    }
+                    className="flex flex-shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-xs text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+                    title={hiddenDone.has(p.id) ? "Показать выполненные" : "Скрыть выполненные"}
+                  >
+                    {hiddenDone.has(p.id) ? (
+                      <ChevronRight size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
+                    )}
+                    <span>✓{done.length}</span>
+                  </button>
+                )}
                 <span
                   className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs ${
                     p.status === "done"
@@ -167,7 +192,7 @@ export function ProjectsList({
                     showProject={false}
                   />
                 ))}
-                {done.map((t: { id: string }) => (
+                {!hiddenDone.has(p.id) && done.map((t: { id: string }) => (
                   <TaskItem
                     key={t.id}
                     task={t as never}
