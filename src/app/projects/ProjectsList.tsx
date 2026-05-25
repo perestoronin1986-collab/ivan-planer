@@ -63,7 +63,15 @@ export function ProjectsList({
     return { liveProjects, tasksByProject, sphereById, projectById };
   });
 
-  const [hiddenDone, setHiddenDone] = useState<Set<string>>(new Set());
+  const [hiddenDone, setHiddenDone] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = localStorage.getItem("ivanplaner:hidden-done-tasks");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
 
   const projects = data?.liveProjects ?? [];
   const tasksByProject = data?.tasksByProject ?? new Map();
@@ -143,6 +151,12 @@ export function ProjectsList({
                         const next = new Set(prev);
                         if (next.has(p.id)) next.delete(p.id);
                         else next.add(p.id);
+                        try {
+                          localStorage.setItem(
+                            "ivanplaner:hidden-done-tasks",
+                            JSON.stringify([...next]),
+                          );
+                        } catch {}
                         return next;
                       })
                     }
