@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import { ProjectsList } from "./ProjectsList";
+import { PageShell } from "@/components/ui";
 
 export default async function ProjectsPage() {
   await requireUser();
@@ -19,15 +19,8 @@ export default async function ProjectsPage() {
   }[];
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-6">
-      <div>
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← главная
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Проекты</h1>
-      </div>
-
+    <PageShell title="Проекты" emoji="📁" subtitle="активные">
       <ProjectsList sphereList={sphereList} />
-    </main>
+    </PageShell>
   );
 }

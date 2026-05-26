@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3f4f6;
+  --foreground: #111827;
+
+  /* Brand (фиолетовая) */
+  --brand-50: #faf5ff;
+  --brand-100: #ede9fe;
+  --brand-200: #e9d5ff;
+  --brand-300: #c4b5fd;
+  --brand-400: #a78bfa;
+  --brand-500: #8b5cf6;
+  --brand-600: #7c3aed;
+  --brand-700: #6d28d9;
+  --brand-900: #4c1d95;
+
+  --ink: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+
+  /* Радиусы */
+  --r-card: 20px;
+  --r-tile: 14px;
+  --r-chip: 999px;
+
+  /* Тени */
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-accent: 0 4px 20px rgba(139, 92, 246, 0.2);
+  --shadow-primary: 0 4px 15px rgba(124, 58, 237, 0.4);
+
+  /* Градиенты */
+  --grad-card-accent: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  --grad-primary: linear-gradient(135deg, #7c3aed, #8b5cf6);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-900: var(--brand-900);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
 }

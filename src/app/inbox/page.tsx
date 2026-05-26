@@ -11,6 +11,7 @@ import {
 } from "@/lib/local/mutations";
 import { useUserId } from "@/lib/local/useUser";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { PageShell, Section, EmptyState } from "@/components/ui";
 
 export default function InboxPage() {
   const userId = useUserId();
@@ -35,27 +36,23 @@ export default function InboxPage() {
 
   if (userId === undefined) {
     return (
-      <main className="mx-auto w-full max-w-3xl p-6">
-        <p className="text-sm text-neutral-500">Войди для работы с inbox.</p>
-        <Link className="text-sm underline" href="/login">
-          /login
-        </Link>
-      </main>
+      <PageShell title="Инбокс" emoji="📥">
+        <Section>
+          <p className="text-sm text-muted">Войди для работы с inbox.</p>
+          <Link className="text-sm underline" href="/login" style={{ color: "var(--brand-600)" }}>
+            /login
+          </Link>
+        </Section>
+      </PageShell>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-6">
-      <div>
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← главная
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Inbox</h1>
-        <p className="text-sm text-neutral-500">
-          Быстрые записи — потом разберёшь
-        </p>
-      </div>
-
+    <PageShell
+      title="Инбокс"
+      emoji="📥"
+      subtitle="быстрые записи — потом разберёшь"
+    >
       <QuickCapture
         onAdd={async (content) => {
           if (!userId) return;
@@ -63,22 +60,20 @@ export default function InboxPage() {
         }}
       />
 
-      <div className="space-y-3">
-        {items && items.length === 0 && (
-          <p className="py-4 text-center text-sm text-neutral-500">
-            Inbox пуст.
-          </p>
-        )}
-        {items?.map((item) => (
-          <div
-            key={item.id}
-            className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
-          >
-            <p className="text-sm">{item.content}</p>
-            <p className="text-xs text-neutral-400">
-              {new Date(item.created_at).toLocaleString("ru")}
-            </p>
+      {items && items.length === 0 && (
+        <Section>
+          <EmptyState emoji="📥" title="Инбокс пуст" hint="Запиши мысль выше" />
+        </Section>
+      )}
 
+      {items?.map((item) => (
+        <Section key={item.id}>
+          <p className="text-sm">{item.content}</p>
+          <p className="text-xs text-muted mt-1">
+            {new Date(item.created_at).toLocaleString("ru")}
+          </p>
+
+          <div className="mt-3">
             <ProcessRow
               spheres={spheres ?? []}
               projects={projects ?? []}
@@ -94,16 +89,18 @@ export default function InboxPage() {
                 });
               }}
             />
+          </div>
 
+          <div className="mt-2">
             <ConfirmDeleteButton
               onConfirm={() => deleteInboxItemLocal(item.id)}
               message="Удалить запись из Inbox?"
               description={item.content}
             />
           </div>
-        ))}
-      </div>
-    </main>
+        </Section>
+      ))}
+    </PageShell>
   );
 }
 
@@ -129,12 +126,12 @@ function QuickCapture({
         onChange={(e) => setValue(e.target.value)}
         placeholder="Запиши мысль, идею, задачу…"
         autoFocus
-        className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700"
+        className="flex-1 rounded-[14px] border border-[var(--brand-200)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[var(--brand-500)]"
       />
       <button
         type="submit"
         disabled={!trimmed}
-        className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+        className="rounded-[14px] bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(124,58,237,0.4)] disabled:opacity-50"
       >
         Записать
       </button>

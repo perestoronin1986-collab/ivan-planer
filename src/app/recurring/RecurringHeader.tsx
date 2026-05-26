@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { AddRecurringTaskModal } from "@/app/today/AddRecurringTaskModal";
 
-export function RecurringHeader() {
+export function RecurringAddButton() {
   const data = useLiveQuery(async () => {
     const db = localDb();
     const [spheres, projects] = await Promise.all([
@@ -19,15 +19,12 @@ export function RecurringHeader() {
   const todayDefault = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="flex items-center gap-3">
-      <h1 className="text-2xl font-semibold">Регулярные задачи</h1>
-      <AddRecurringTaskModal
-        spheres={spheres}
-        projects={projects}
-        todayDefault={todayDefault}
-        triggerChildren={<span className="text-3xl font-black leading-none">+</span>}
-        triggerClassName="flex items-center justify-center w-9 h-9 rounded-full bg-violet-600 text-white hover:bg-violet-700 shadow"
-      />
-    </div>
+    <AddRecurringTaskModal
+      spheres={spheres}
+      projects={projects}
+      todayDefault={todayDefault}
+      triggerChildren="+"
+      triggerClassName="flex items-center justify-center w-9 h-9 rounded-full bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] text-white text-xl font-bold shadow-[0_4px_15px_rgba(124,58,237,0.4)]"
+    />
   );
 }

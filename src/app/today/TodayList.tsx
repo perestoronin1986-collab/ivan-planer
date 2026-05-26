@@ -3,6 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { TaskItem } from "@/components/TaskItem";
+import { Section, EmptyState } from "@/components/ui";
 
 export function TodayList() {
   const data = useLiveQuery(async () => {
@@ -39,48 +40,46 @@ export function TodayList() {
   const empty = overdue.length === 0 && today.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-2">
       {empty && (
-        <p className="py-4 text-center text-sm text-neutral-500">
-          Задач нет. Отличный день!
-        </p>
+        <Section>
+          <EmptyState emoji="✨" title="Задач нет" hint="Отличный день!" />
+        </Section>
       )}
 
       {overdue.length > 0 && (
-        <section className="space-y-1.5">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-red-500">
-            Просрочено
-          </h2>
-          {overdue.map((t) => (
-            <TaskItem
-              key={t.id}
-              task={t}
-              sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
-              project={
-                t.project_id ? projectById.get(t.project_id) ?? null : null
-              }
-              accentDate
-            />
-          ))}
-        </section>
+        <Section accent label="⚠ Просрочено">
+          <div className="space-y-1.5">
+            {overdue.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+                project={
+                  t.project_id ? projectById.get(t.project_id) ?? null : null
+                }
+                accentDate
+              />
+            ))}
+          </div>
+        </Section>
       )}
 
       {today.length > 0 && (
-        <section className="space-y-1.5">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">
-            Сегодня
-          </h2>
-          {today.map((t) => (
-            <TaskItem
-              key={t.id}
-              task={t}
-              sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
-              project={
-                t.project_id ? projectById.get(t.project_id) ?? null : null
-              }
-            />
-          ))}
-        </section>
+        <Section label="⚡ Активные">
+          <div className="space-y-1.5">
+            {today.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+                project={
+                  t.project_id ? projectById.get(t.project_id) ?? null : null
+                }
+              />
+            ))}
+          </div>
+        </Section>
       )}
     </div>
   );

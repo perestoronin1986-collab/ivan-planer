@@ -108,21 +108,28 @@ export function WeekDayColumn({
   const sphereById = data?.sphereById ?? new Map();
   const projectById = data?.projectById ?? new Map();
 
+  const cardStyle: React.CSSProperties = today
+    ? {
+        background: "var(--grad-card-accent)",
+        border: "1.5px solid var(--brand-400)",
+        borderRadius: "var(--r-card)",
+        boxShadow: "var(--shadow-accent)",
+      }
+    : {
+        background: "#fff",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--r-card)",
+        boxShadow: "var(--shadow-card)",
+      };
+
   return (
-    <div
-      className={`min-h-32 space-y-1.5 rounded-lg border p-2 ${
-        today
-          ? "border-neutral-900 dark:border-neutral-100"
-          : "border-neutral-200 dark:border-neutral-800"
-      }`}
-    >
+    <div style={cardStyle} className="p-3 space-y-1.5">
       <div className="flex items-center justify-between gap-1">
         <p
-          className={`text-sm font-semibold ${
-            today
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-500"
-          }`}
+          className="text-[10px] font-bold uppercase tracking-[1px]"
+          style={{
+            color: today ? "var(--brand-600)" : "var(--brand-400)",
+          }}
         >
           {dayLabel}
         </p>
@@ -131,7 +138,8 @@ export function WeekDayColumn({
             reset();
             dialogRef.current?.showModal();
           }}
-          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-sm leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold leading-none"
+          style={{ background: "var(--brand-100)", color: "var(--brand-600)" }}
           title="Добавить задачу"
         >
           +
@@ -149,7 +157,9 @@ export function WeekDayColumn({
       ))}
 
       {tasks.length === 0 && (
-        <p className="text-xs text-neutral-300 dark:text-neutral-700">—</p>
+        <p className="text-xs" style={{ color: "var(--brand-300)" }}>
+          пусто
+        </p>
       )}
 
       <dialog

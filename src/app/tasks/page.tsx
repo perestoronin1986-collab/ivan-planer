@@ -6,6 +6,7 @@ import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
 import { TaskItem } from "@/components/TaskItem";
 import { AddTaskModal } from "@/app/today/AddTaskModal";
+import { PageShell, Section, EmptyState } from "@/components/ui";
 import type { TaskRow } from "@/lib/db";
 
 export default function TasksPage() {
@@ -38,12 +39,14 @@ export default function TasksPage() {
 
   if (userId === undefined) {
     return (
-      <main className="mx-auto w-full max-w-3xl p-6">
-        <p className="text-sm text-neutral-500">Войди для работы с задачами.</p>
-        <Link className="text-sm underline" href="/login">
-          /login
-        </Link>
-      </main>
+      <PageShell title="Активные" emoji="⚡">
+        <Section>
+          <p className="text-sm text-muted">Войди для работы с задачами.</p>
+          <Link className="text-sm underline" href="/login" style={{ color: "var(--brand-600)" }}>
+            /login
+          </Link>
+        </Section>
+      </PageShell>
     );
   }
 
@@ -57,39 +60,37 @@ export default function TasksPage() {
   const todayDefault = new Date().toISOString().slice(0, 10);
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-6">
-      <div>
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← главная
-        </Link>
-        <div className="mt-1 flex items-center gap-3">
-          <h1 className="text-2xl font-semibold">Все активные задачи</h1>
-          <AddTaskModal
-            spheres={spheres}
-            projects={projects}
-            todayDefault={todayDefault}
-            triggerChildren={<span className="text-3xl font-black leading-none">+</span>}
-            triggerClassName="flex items-center justify-center w-9 h-9 rounded-full bg-violet-600 text-white hover:bg-violet-700 shadow"
-          />
-        </div>
-      </div>
-
-      <section className="space-y-1.5">
-        {todo.map((t) => (
-          <TaskItem
-            key={t.id}
-            task={t}
-            sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
-            project={t.project_id ? projectById.get(t.project_id) ?? null : null}
-          />
-        ))}
-        {todo.length === 0 && (
-          <p className="py-4 text-center text-sm text-neutral-500">
-            Все задачи выполнены!
-          </p>
+    <PageShell
+      title="Активные"
+      emoji="⚡"
+      subtitle={`${todo.length} задач`}
+      actions={
+        <AddTaskModal
+          spheres={spheres}
+          projects={projects}
+          todayDefault={todayDefault}
+          triggerChildren="+"
+          triggerClassName="flex items-center justify-center w-9 h-9 rounded-full bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] text-white text-xl font-bold shadow-[0_4px_15px_rgba(124,58,237,0.4)]"
+        />
+      }
+    >
+      <Section label="⚡ Все активные">
+        {todo.length === 0 ? (
+          <EmptyState emoji="🎉" title="Все задачи выполнены!" />
+        ) : (
+          <div className="space-y-1.5">
+            {todo.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+                project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+              />
+            ))}
+          </div>
         )}
-      </section>
-    </main>
+      </Section>
+    </PageShell>
   );
 }
 

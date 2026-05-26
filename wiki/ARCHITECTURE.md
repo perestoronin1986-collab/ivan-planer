@@ -1,13 +1,13 @@
 # Архитектура IvanPlaner
 
-> Последнее обновление: 2026-05-21
+> Последнее обновление: 2026-05-26
 
 ## Стек
 
 | Слой | Технология |
 |------|-----------|
 | Фреймворк | Next.js 16 App Router, TypeScript |
-| UI | Tailwind CSS v4, lucide-react |
+| UI | Tailwind CSS v4 + brand-палитра в `@theme` (см. `wiki/DESIGN.md`), компоненты `src/components/ui/`, lucide-react |
 | Auth | Supabase Auth (magic link / email) |
 | БД | Supabase Postgres через PostgREST (`@supabase/supabase-js`) |
 | Схема | Drizzle ORM — только `schema.ts` + drizzle-kit для миграций |

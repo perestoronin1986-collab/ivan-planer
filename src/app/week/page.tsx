@@ -12,6 +12,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 import { WeekDayColumn } from "./WeekDayColumn";
+import { PageShell } from "@/components/ui";
 
 export default async function WeekPage({
   searchParams,
@@ -48,35 +49,26 @@ export default async function WeekPage({
 
   const label = `${format(weekStart, "d MMM", { locale: ru })} – ${format(weekEnd, "d MMM yyyy", { locale: ru })}`;
 
+  const navBtn =
+    "rounded-[14px] border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 py-1.5 text-xs font-semibold text-[var(--brand-900)]";
+
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← главная
+    <PageShell title="Неделя" emoji="📆" subtitle={label}>
+      <div className="flex items-center justify-center gap-2">
+        <Link href={`/week?w=${offset - 1}`} className={navBtn}>
+          ‹ пред
         </Link>
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/week?w=${offset - 1}`}
-            className="rounded border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-          >
-            ‹ пред
-          </Link>
-          <span className="text-sm font-medium">{label}</span>
-          <Link
-            href={`/week?w=${offset + 1}`}
-            className="rounded border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-          >
-            след ›
-          </Link>
-        </div>
         {offset !== 0 && (
-          <Link href="/week" className="text-sm text-neutral-500 hover:underline">
+          <Link href="/week" className={navBtn}>
             сегодня
           </Link>
         )}
+        <Link href={`/week?w=${offset + 1}`} className={navBtn}>
+          след ›
+        </Link>
       </div>
 
-      <div className="flex flex-col gap-2 md:grid md:grid-cols-7">
+      <div className="flex flex-col gap-2">
         {days.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const dayLabel = format(day, "EEEE, d MMMM", { locale: ru });
@@ -92,6 +84,6 @@ export default async function WeekPage({
           );
         })}
       </div>
-    </main>
+    </PageShell>
   );
 }

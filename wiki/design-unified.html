@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IvanPlaner — единый стиль</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --brand-50:#faf5ff; --brand-100:#ede9fe; --brand-200:#e9d5ff;
+    --brand-300:#c4b5fd; --brand-500:#8b5cf6; --brand-600:#7c3aed;
+    --brand-900:#4c1d95; --ink:#111827; --muted:#6b7280;
+  }
+  body { font-family:-apple-system,"Segoe UI",system-ui,sans-serif; background:#e5e7eb; }
+  .phone {
+    width:380px; background:#f3f4f6; border-radius:32px;
+    border:8px solid #1f2937; padding:12px; min-height:760px;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+  }
+  .label-up { color:var(--brand-300); font-size:10px; font-weight:700;
+              letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:20px;
+          padding:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .card-accent { background:linear-gradient(135deg,#f5f3ff,#ede9fe);
+                 border:1.5px solid #a78bfa; border-radius:20px; padding:12px;
+                 box-shadow:0 4px 20px rgba(139,92,246,.2); }
+  .tile { background:#faf5ff; border:1px solid #e9d5ff; border-radius:14px;
+          padding:11px 10px; text-align:center; display:block;
+          text-decoration:none; color:var(--brand-900); font-size:13px; font-weight:500; }
+  .tile-primary { background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff;
+                  border:none; box-shadow:0 4px 15px rgba(124,58,237,.4); }
+  .back { font-size:12px; color:#9ca3af; text-decoration:none; }
+  .h1 { font-size:22px; font-weight:700; color:var(--ink); margin-top:2px; }
+  .sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .btn-primary { background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff;
+                 border:none; border-radius:14px; padding:10px 14px; font-size:13px;
+                 font-weight:600; box-shadow:0 4px 15px rgba(124,58,237,.35); }
+  .btn-ghost { background:#faf5ff; border:1px solid #e9d5ff; color:var(--brand-900);
+               border-radius:14px; padding:10px 14px; font-size:13px; font-weight:500; }
+  .chip { font-size:11px; padding:2px 8px; border-radius:999px;
+          background:var(--brand-100); color:var(--brand-600); }
+  .task { display:flex; align-items:center; gap:10px; padding:8px;
+          border-radius:10px; font-size:13px; color:var(--ink); }
+  .cb { width:18px; height:18px; border:1.5px solid #c4b5fd; border-radius:6px; flex-shrink:0; }
+  .cb-on { background:var(--brand-600); border-color:var(--brand-600); }
+  .col-head { font-size:11px; font-weight:700; color:var(--brand-600);
+              text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .screen-title { font-size:14px; font-weight:600; margin-bottom:8px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body class="p-8">
+<div class="max-w-[1400px] mx-auto">
+  <h1 class="text-3xl font-bold mb-2">IvanPlaner — единый фиолетовый стиль</h1>
+  <p class="text-gray-600 mb-8">Главная остаётся как есть. Внутренние экраны переписываем под ту же палитру, типографику, карточки.</p>
+
+  <div class="grid grid-cols-3 gap-8 justify-items-center">
+
+    <!-- 1. HOME (current) -->
+    <div>
+      <div class="screen-title">Главная (как сейчас)</div>
+      <div class="phone space-y-2">
+        <header class="flex items-start justify-between pb-1">
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl font-bold">IvanPlaner</h1>
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            </div>
+            <span class="text-xs text-gray-400">ivan@example.com</span>
+          </div>
+          <button class="text-xs text-gray-400 underline">выйти</button>
+        </header>
+
+        <section class="card-accent">
+          <p class="label-up" style="color:#7c3aed">📅 Планирование</p>
+          <div class="grid grid-cols-2 gap-1.5">
+            <a class="tile tile-primary"><div class="text-lg">☀️</div>Сегодня</a>
+            <a class="tile" style="border-color:#c4b5fd"><div class="text-lg">📆</div>Неделя</a>
+            <a class="tile" style="border-color:#c4b5fd"><div class="text-lg">🗓</div>Месяц</a>
+            <a class="tile" style="border-color:#c4b5fd"><div class="text-lg">📅</div>Год</a>
+          </div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">🏗 Структура</p>
+          <div class="grid grid-cols-2 gap-2">
+            <a class="tile"><div class="text-base">🌐</div>Сферы</a>
+            <a class="tile"><div class="text-base">📁</div>Проекты</a>
+          </div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">✅ Задачи</p>
+          <div class="grid grid-cols-2 gap-1.5">
+            <a class="tile"><div class="text-base">⚡</div>Активные</a>
+            <a class="tile"><div class="text-base">🔄</div>Регулярные</a>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="grid grid-cols-2 gap-2">
+            <a class="tile"><div class="text-base">🔍</div>Поиск</a>
+            <a class="tile"><div class="text-base">⚙️</div>Настройки</a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 2. TODAY -->
+    <div>
+      <div class="screen-title">Сегодня — новый стиль</div>
+      <div class="phone space-y-3">
+        <div>
+          <a class="back">← главная</a>
+          <div class="h1">☀️ Сегодня</div>
+          <div class="sub">26 мая · 7 задач</div>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn-primary flex-1">+ Задача</button>
+          <button class="btn-ghost flex-1">+ Регулярная</button>
+        </div>
+
+        <section class="card">
+          <p class="label-up">⚡ Активные</p>
+          <div class="task"><div class="cb"></div><span>Закончить отчёт Q2</span><span class="chip ml-auto">Карьера</span></div>
+          <div class="task"><div class="cb"></div><span>Тренировка — ноги</span><span class="chip ml-auto">Спорт</span></div>
+          <div class="task"><div class="cb"></div><span>Купить продукты</span></div>
+          <div class="task"><div class="cb"></div><span>Позвонить маме</span></div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">✔ Готово сегодня</p>
+          <div class="task"><div class="cb cb-on"></div><span class="line-through text-gray-400">Утренний ритуал</span></div>
+          <div class="task"><div class="cb cb-on"></div><span class="line-through text-gray-400">Письма в инбоксе</span></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 3. WEEK -->
+    <div>
+      <div class="screen-title">Неделя — новый стиль</div>
+      <div class="phone space-y-3">
+        <div>
+          <a class="back">← главная</a>
+          <div class="h1">📆 Неделя</div>
+          <div class="sub">26 мая — 1 июня</div>
+        </div>
+
+        <div class="flex gap-2 justify-center">
+          <button class="btn-ghost px-3 py-1.5 text-xs">‹ пред</button>
+          <button class="btn-ghost px-3 py-1.5 text-xs">сегодня</button>
+          <button class="btn-ghost px-3 py-1.5 text-xs">след ›</button>
+        </div>
+
+        <section class="card-accent">
+          <p class="label-up" style="color:#7c3aed">Вт · сегодня</p>
+          <div class="task"><div class="cb"></div><span>Отчёт Q2</span></div>
+          <div class="task"><div class="cb"></div><span>Тренировка</span></div>
+        </section>
+        <section class="card">
+          <p class="label-up">Ср</p>
+          <div class="task"><div class="cb"></div><span>Встреча с дизайнером</span></div>
+        </section>
+        <section class="card">
+          <p class="label-up">Чт</p>
+          <div class="task"><div class="cb"></div><span>Прочитать главу 4</span></div>
+          <div class="task"><div class="cb"></div><span>Заказать книгу</span></div>
+        </section>
+        <section class="card">
+          <p class="label-up">Пт</p>
+          <div class="text-xs text-gray-400 px-2">пусто</div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 4. PROJECTS -->
+    <div>
+      <div class="screen-title">Проекты — новый стиль</div>
+      <div class="phone space-y-3">
+        <div>
+          <a class="back">← главная</a>
+          <div class="h1">📁 Проекты</div>
+          <div class="sub">5 активных</div>
+        </div>
+
+        <button class="btn-primary w-full">+ Новый проект</button>
+
+        <section class="card">
+          <p class="label-up">🌐 Карьера</p>
+          <div class="task"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Отчёт Q2</span><span class="chip ml-auto">12</span></div>
+          <div class="task"><span class="w-2 h-2 rounded-full bg-indigo-400"></span><span>Лендинг</span><span class="chip ml-auto">4</span></div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">🏠 Дом</p>
+          <div class="task"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Ремонт кухни</span><span class="chip ml-auto">8</span></div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">🎯 Развитие</p>
+          <div class="task"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Книга по системам</span><span class="chip ml-auto">3</span></div>
+          <div class="task"><span class="w-2 h-2 rounded-full bg-sky-400"></span><span>Английский B2</span><span class="chip ml-auto">5</span></div>
+        </section>
+
+        <a class="tile mx-auto block w-1/2 mt-2">✅ Выполненные</a>
+      </div>
+    </div>
+
+    <!-- 5. SPHERES -->
+    <div>
+      <div class="screen-title">Сферы — новый стиль</div>
+      <div class="phone space-y-3">
+        <div>
+          <a class="back">← главная</a>
+          <div class="h1">🌐 Сферы</div>
+          <div class="sub">5 сфер жизни</div>
+        </div>
+
+        <button class="btn-primary w-full">+ Новая сфера</button>
+
+        <section class="card">
+          <div class="grid grid-cols-2 gap-2">
+            <a class="tile" style="background:#fef2f2;border-color:#fecaca;color:#991b1b"><div class="text-lg">💼</div>Карьера<div class="text-[10px] mt-1 opacity-70">2 проекта</div></a>
+            <a class="tile" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46"><div class="text-lg">🏃</div>Спорт<div class="text-[10px] mt-1 opacity-70">1 проект</div></a>
+            <a class="tile" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af"><div class="text-lg">📚</div>Развитие<div class="text-[10px] mt-1 opacity-70">2 проекта</div></a>
+            <a class="tile" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412"><div class="text-lg">🏠</div>Дом<div class="text-[10px] mt-1 opacity-70">1 проект</div></a>
+            <a class="tile" style="background:#fdf4ff;border-color:#f5d0fe;color:#86198f"><div class="text-lg">❤️</div>Семья<div class="text-[10px] mt-1 opacity-70">—</div></a>
+            <a class="tile" style="background:#f0fdfa;border-color:#99f6e4;color:#115e59"><div class="text-lg">💰</div>Финансы<div class="text-[10px] mt-1 opacity-70">—</div></a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 6. SETTINGS -->
+    <div>
+      <div class="screen-title">Настройки — новый стиль</div>
+      <div class="phone space-y-3">
+        <div>
+          <a class="back">← главная</a>
+          <div class="h1">⚙️ Настройки</div>
+          <div class="sub">ivan@example.com</div>
+        </div>
+
+        <section class="card">
+          <p class="label-up">👤 Аккаунт</p>
+          <div class="task"><span>Email</span><span class="ml-auto text-xs text-gray-500">ivan@…</span></div>
+          <div class="task"><span>Сменить пароль</span><span class="ml-auto text-gray-300">›</span></div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">💾 Данные</p>
+          <div class="task"><span>Экспорт JSON</span><span class="ml-auto text-gray-300">›</span></div>
+          <div class="task"><span>Бэкап</span><span class="ml-auto chip">авто</span></div>
+          <div class="task"><span>Очистить кэш</span><span class="ml-auto text-gray-300">›</span></div>
+        </section>
+
+        <section class="card">
+          <p class="label-up">🔔 Уведомления</p>
+          <div class="task"><span>Напоминания</span><span class="ml-auto w-9 h-5 rounded-full bg-brand-500" style="background:var(--brand-600);position:relative"><span class="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white"></span></span></div>
+          <div class="task"><span>Звук</span><span class="ml-auto w-9 h-5 rounded-full bg-gray-300" style="position:relative"><span class="absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white"></span></span></div>
+        </section>
+
+        <button class="btn-ghost w-full" style="color:#dc2626;border-color:#fecaca;background:#fef2f2">Выйти</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="max-w-3xl mx-auto mt-12 bg-white rounded-xl border p-6 space-y-3">
+    <h2 class="text-xl font-bold">Что одинаково на всех экранах</h2>
+    <ul class="text-sm text-gray-700 space-y-1.5 list-disc pl-5">
+      <li><b>Шапка:</b> «← главная» (12px серый) → emoji+название (22px bold) → подпись (12px muted).</li>
+      <li><b>Карточки:</b> белый фон, border-radius 20px, мягкая тень, padding 12px.</li>
+      <li><b>Метка секции:</b> 10px uppercase, brand-300, с emoji впереди.</li>
+      <li><b>Главное действие:</b> фиолетовый градиент-кнопка (как «Сегодня» на главной).</li>
+      <li><b>Второстепенные:</b> faf5ff фон + e9d5ff border + brand-900 текст.</li>
+      <li><b>Чипы/счётчики:</b> ede9fe фон + brand-600 текст, 11px.</li>
+      <li><b>Тон текста:</b> короткие, без «вашего», нижний регистр в подписях, эмодзи в заголовках.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

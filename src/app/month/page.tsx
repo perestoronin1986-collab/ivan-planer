@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 import { WeekDayColumn } from "../week/WeekDayColumn";
+import { PageShell, Section } from "@/components/ui";
 
 type Row = {
   id: string;
@@ -87,88 +88,91 @@ export default async function MonthPage({
 
   const monthLabel = format(monthAnchor, "LLLL yyyy", { locale: ru });
 
+  const navBtn =
+    "rounded-[14px] border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 py-1.5 text-xs font-semibold text-[var(--brand-900)]";
+
   return (
-    <main className="mx-auto w-full max-w-3xl p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">← главная</Link>
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/month?m=${offset - 1}`}
-            className="rounded border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-          >
-            ‹
-          </Link>
-          <span className="text-base font-semibold capitalize">{monthLabel}</span>
-          <Link
-            href={`/month?m=${offset + 1}`}
-            className="rounded border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-          >
-            ›
-          </Link>
-        </div>
+    <PageShell title={monthLabel} emoji="🗓" subtitle={`${tasks.length} задач`}>
+      <div className="flex items-center justify-center gap-2">
+        <Link href={`/month?m=${offset - 1}`} className={navBtn}>
+          ‹
+        </Link>
         {offset !== 0 && (
-          <Link href="/month" className="text-sm text-neutral-500 hover:underline">сегодня</Link>
+          <Link href="/month" className={navBtn}>
+            сегодня
+          </Link>
         )}
-        {offset === 0 && <span className="w-12" />}
+        <Link href={`/month?m=${offset + 1}`} className={navBtn}>
+          ›
+        </Link>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-neutral-500">
-        {WEEKDAYS.map((w, i) => (
-          <div key={w} className={i >= 5 ? "text-red-500" : ""}>
-            {w.toUpperCase()}
-          </div>
-        ))}
-      </div>
+      <Section>
+        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-[1px] mb-2"
+             style={{ color: "var(--brand-400)" }}>
+          {WEEKDAYS.map((w, i) => (
+            <div key={w} style={i >= 5 ? { color: "var(--brand-600)" } : undefined}>
+              {w}
+            </div>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const dayTasks = tasksByDay.get(key) ?? [];
-          const inMonth = isSameMonth(day, monthAnchor);
-          const today = isToday(day);
-          const selected = key === selectedKey;
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day) => {
+            const key = format(day, "yyyy-MM-dd");
+            const dayTasks = tasksByDay.get(key) ?? [];
+            const inMonth = isSameMonth(day, monthAnchor);
+            const today = isToday(day);
+            const selected = key === selectedKey;
 
-          const hasTasks = dayTasks.length > 0;
-          const allDone = hasTasks && dayTasks.every((t) => t.status === "done");
-          const hasUndone = dayTasks.some((t) => t.status !== "done");
+            const hasTasks = dayTasks.length > 0;
+            const allDone = hasTasks && dayTasks.every((t) => t.status === "done");
+            const hasUndone = dayTasks.some((t) => t.status !== "done");
 
-          const bg = !hasTasks
-            ? ""
-            : allDone
-              ? "bg-green-100 dark:bg-green-900/30"
-              : hasUndone
-                ? "bg-red-100 dark:bg-red-900/30"
-                : "";
+            const style: React.CSSProperties = {
+              borderWidth: 2,
+              borderStyle: "solid",
+              borderColor: selected
+                ? "var(--brand-600)"
+                : today
+                  ? "var(--brand-300)"
+                  : "transparent",
+              background: !hasTasks
+                ? "transparent"
+                : allDone
+                  ? "#dcfce7"
+                  : hasUndone
+                    ? "#fee2e2"
+                    : "transparent",
+              color: !inMonth
+                ? "#d1d5db"
+                : selected
+                  ? "var(--brand-900)"
+                  : "var(--ink)",
+              borderRadius: 10,
+            };
 
-          const border = selected
-            ? "border-neutral-900 dark:border-neutral-100"
-            : today
-              ? "border-neutral-500 dark:border-neutral-400"
-              : "border-transparent";
+            return (
+              <Link
+                key={key}
+                href={`/month?m=${offset}&d=${key}`}
+                style={style}
+                className="aspect-square flex items-center justify-center text-sm font-medium"
+              >
+                {format(day, "d")}
+              </Link>
+            );
+          })}
+        </div>
+      </Section>
 
-          const muted = inMonth ? "" : "text-neutral-300 dark:text-neutral-700";
-
-          return (
-            <Link
-              key={key}
-              href={`/month?m=${offset}&d=${key}`}
-              className={`aspect-square rounded border-2 ${border} ${bg} flex items-center justify-center text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 ${muted}`}
-            >
-              {format(day, "d")}
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="pt-2">
-        <WeekDayColumn
-          dayLabel={selectedLabel}
-          dayKey={selectedKey}
-          today={isToday(selectedDate)}
-          spheres={spheres}
-          projects={projects}
-        />
-      </div>
-    </main>
+      <WeekDayColumn
+        dayLabel={selectedLabel}
+        dayKey={selectedKey}
+        today={isToday(selectedDate)}
+        spheres={spheres}
+        projects={projects}
+      />
+    </PageShell>
   );
 }

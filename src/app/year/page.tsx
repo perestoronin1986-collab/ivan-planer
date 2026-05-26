@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { PageShell } from "@/components/ui";
 
 const MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -40,16 +40,15 @@ export default function YearPage() {
   const active = data?.active ?? new Array(12).fill(0);
   const done = data?.done ?? new Array(12).fill(0);
 
-  return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-4 bg-gray-100 p-3">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← главная
-        </Link>
-        <h1 className="text-lg font-semibold text-gray-900">{year} год</h1>
-        <span className="w-14" />
-      </div>
+  const totalActive = active.reduce((a, b) => a + b, 0);
+  const totalDone = done.reduce((a, b) => a + b, 0);
 
+  return (
+    <PageShell
+      title={`${year} год`}
+      emoji="📅"
+      subtitle={`${totalActive} активных · ${totalDone} выполнено`}
+    >
       <div
         style={{
           display: "grid",
@@ -184,6 +183,6 @@ export default function YearPage() {
           выполнено
         </span>
       </div>
-    </main>
+    </PageShell>
   );
 }

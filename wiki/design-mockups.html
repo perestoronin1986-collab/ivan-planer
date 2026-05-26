@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IvanPlaner — 5 вариантов главного окна</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+  .frame { box-shadow: 0 10px 40px rgba(0,0,0,.08); border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+  .mock { height: 560px; display: grid; }
+  .chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #4338ca; }
+  .task { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; }
+  .task:hover { background:#f9fafb; }
+  .cb { width:16px; height:16px; border:1.5px solid #cbd5e1; border-radius:4px; flex-shrink:0; }
+  .nav { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:8px; cursor:pointer; font-size:14px; color:#374151; }
+  .nav:hover { background:#f3f4f6; }
+  .nav.active { background:#eef2ff; color:#4338ca; font-weight:500; }
+  .ico { width:16px; height:16px; display:inline-block; }
+  h2.var { font-size: 22px; font-weight: 700; margin: 32px 0 8px; }
+  .desc { color:#6b7280; font-size:14px; margin-bottom:14px; }
+</style>
+</head>
+<body class="bg-gray-50 p-8">
+<div class="max-w-6xl mx-auto">
+  <h1 class="text-3xl font-bold mb-2">IvanPlaner — 5 вариантов главного окна</h1>
+  <p class="text-gray-600 mb-8">Статические моки. Tailwind CDN. Кликов нет — только превью раскладки.</p>
+
+  <!-- VARIANT 1: Todoist -->
+  <h2 class="var">1. Todoist — sidebar + список</h2>
+  <p class="desc">Левый sidebar 240px, узкий хедер, центральный список задач. Плотно, классика.</p>
+  <div class="frame mock" style="grid-template-columns: 240px 1fr;">
+    <aside class="bg-gray-50 border-r p-3 flex flex-col gap-1">
+      <div class="flex items-center gap-2 px-2 py-2 mb-2">
+        <div class="w-7 h-7 rounded bg-indigo-600 text-white grid place-items-center text-sm font-bold">И</div>
+        <span class="font-semibold">IvanPlaner</span>
+      </div>
+      <div class="nav"><span>📥</span> Инбокс <span class="ml-auto chip">12</span></div>
+      <div class="nav active"><span>⭐</span> Сегодня <span class="ml-auto chip">7</span></div>
+      <div class="nav"><span>📅</span> Неделя</div>
+      <div class="nav"><span>🗓</span> Месяц</div>
+      <div class="nav"><span>📆</span> Год</div>
+      <div class="text-xs uppercase text-gray-400 px-2 mt-4 mb-1">Проекты</div>
+      <div class="nav"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Ремонт</div>
+      <div class="nav"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Книга</div>
+      <div class="nav"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Спорт</div>
+      <div class="text-xs uppercase text-gray-400 px-2 mt-4 mb-1">Ещё</div>
+      <div class="nav"><span>🎯</span> Сферы</div>
+      <div class="nav"><span>🔁</span> Повторяющиеся</div>
+      <div class="nav"><span>✅</span> Готово</div>
+      <div class="mt-auto nav"><span>⚙</span> Настройки</div>
+    </aside>
+    <main class="flex flex-col">
+      <header class="border-b px-6 py-3 flex items-center gap-3">
+        <input class="flex-1 bg-gray-100 rounded-md px-3 py-1.5 text-sm" placeholder="Поиск…">
+        <button class="bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-md">+ Задача</button>
+        <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+      </header>
+      <div class="p-6 overflow-auto">
+        <h3 class="text-xl font-bold mb-4">Сегодня · 26 мая</h3>
+        <div class="task"><div class="cb"></div><span>Закончить отчёт по Q2</span><span class="chip ml-auto">Работа</span></div>
+        <div class="task"><div class="cb"></div><span>Купить продукты на неделю</span></div>
+        <div class="task"><div class="cb"></div><span>Тренировка — ноги</span><span class="chip ml-auto">Спорт</span></div>
+        <div class="task"><div class="cb"></div><span>Позвонить маме</span></div>
+        <div class="task"><div class="cb bg-indigo-600 border-indigo-600"></div><span class="line-through text-gray-400">Утренний ритуал</span></div>
+        <h3 class="text-lg font-semibold mt-6 mb-3 text-gray-600">Завтра</h3>
+        <div class="task"><div class="cb"></div><span>Встреча с дизайнером</span></div>
+        <div class="task"><div class="cb"></div><span>Прочитать главу 4</span><span class="chip ml-auto">Книга</span></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- VARIANT 2: TickTick three columns -->
+  <h2 class="var">2. TickTick — три колонки</h2>
+  <p class="desc">Узкая иконочная навигация, список, панель деталей. Всё видно без модалок.</p>
+  <div class="frame mock" style="grid-template-columns: 60px 280px 1fr;">
+    <aside class="bg-gray-900 text-white flex flex-col items-center py-4 gap-2">
+      <div class="w-9 h-9 rounded bg-indigo-500 grid place-items-center font-bold mb-3">И</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">📥</div>
+      <div class="w-10 h-10 grid place-items-center rounded bg-gray-800">⭐</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">📅</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">🗓</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">📆</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">📁</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">🎯</div>
+      <div class="w-10 h-10 grid place-items-center rounded hover:bg-gray-800">🔁</div>
+      <div class="mt-auto w-10 h-10 grid place-items-center rounded hover:bg-gray-800">⚙</div>
+    </aside>
+    <section class="border-r flex flex-col">
+      <div class="p-4 border-b">
+        <h3 class="font-bold">Сегодня</h3>
+        <p class="text-xs text-gray-500">7 задач · 2 готово</p>
+      </div>
+      <div class="p-2 overflow-auto">
+        <div class="task bg-indigo-50"><div class="cb"></div><span>Закончить отчёт Q2</span></div>
+        <div class="task"><div class="cb"></div><span>Продукты</span></div>
+        <div class="task"><div class="cb"></div><span>Тренировка ноги</span></div>
+        <div class="task"><div class="cb"></div><span>Позвонить маме</span></div>
+        <div class="task"><div class="cb"></div><span>Прочитать главу 4</span></div>
+      </div>
+      <button class="m-3 bg-indigo-600 text-white py-2 rounded text-sm">+ Новая задача</button>
+    </section>
+    <section class="p-6 overflow-auto">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="cb"></div>
+        <input class="text-xl font-semibold flex-1 outline-none" value="Закончить отчёт Q2">
+      </div>
+      <div class="flex gap-2 mb-4 flex-wrap">
+        <span class="chip">📅 Сегодня 18:00</span>
+        <span class="chip">📁 Работа</span>
+        <span class="chip">🎯 Карьера</span>
+        <span class="chip">🔴 Высокий</span>
+      </div>
+      <div class="text-sm font-semibold text-gray-500 mb-2">Подзадачи</div>
+      <div class="task"><div class="cb"></div><span>Собрать метрики</span></div>
+      <div class="task"><div class="cb bg-indigo-600 border-indigo-600"></div><span class="line-through text-gray-400">Шаблон презентации</span></div>
+      <div class="task"><div class="cb"></div><span>Согласовать с Аней</span></div>
+      <div class="text-sm font-semibold text-gray-500 mt-5 mb-2">Заметки</div>
+      <div class="bg-gray-50 rounded p-3 text-sm text-gray-600">Не забыть про блок с retention…</div>
+    </section>
+  </div>
+
+  <!-- VARIANT 3: Things 3 minimalism -->
+  <h2 class="var">3. Things 3 / Sunsama — минимализм</h2>
+  <p class="desc">Только верхний бар. Одна центральная колонка. Фокус и воздух.</p>
+  <div class="frame mock" style="grid-template-rows: auto 1fr;">
+    <header class="border-b px-6 py-3 flex items-center gap-4 bg-white">
+      <div class="font-bold">IvanPlaner</div>
+      <div class="flex bg-gray-100 rounded-lg p-1 text-sm">
+        <button class="px-3 py-1 rounded-md bg-white shadow-sm">Сегодня</button>
+        <button class="px-3 py-1 text-gray-500">Неделя</button>
+        <button class="px-3 py-1 text-gray-500">Месяц</button>
+        <button class="px-3 py-1 text-gray-500">Год</button>
+      </div>
+      <div class="ml-auto flex items-center gap-3">
+        <button class="text-gray-500 text-sm">🔍</button>
+        <button class="bg-gray-900 text-white text-sm px-3 py-1.5 rounded-md">+ Задача</button>
+        <button class="text-gray-500">⋯</button>
+        <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+      </div>
+    </header>
+    <main class="overflow-auto py-10">
+      <div class="max-w-2xl mx-auto px-6">
+        <div class="text-xs text-gray-400 uppercase tracking-wider">Вторник</div>
+        <h2 class="text-3xl font-bold mb-1">Сегодня</h2>
+        <div class="text-gray-500 mb-8">26 мая · 7 задач</div>
+
+        <div class="text-xs uppercase text-gray-400 mb-2">Карьера</div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">Закончить отчёт Q2</span><span class="text-xs text-gray-400 ml-auto">18:00</span></div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">Письма в инбоксе</span></div>
+
+        <div class="text-xs uppercase text-gray-400 mb-2 mt-6">Здоровье</div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">Тренировка — ноги</span></div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">10 000 шагов</span></div>
+
+        <div class="text-xs uppercase text-gray-400 mb-2 mt-6">Семья</div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">Позвонить маме</span></div>
+        <div class="task py-3"><div class="cb w-5 h-5 rounded-full"></div><span class="text-base">Купить продукты</span></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- VARIANT 4: Notion/Linear dashboard -->
+  <h2 class="var">4. Notion / Linear — дашборд + ⌘K</h2>
+  <p class="desc">Минимум sidebar, навигация через command palette. Главный экран — карточки.</p>
+  <div class="frame mock relative" style="grid-template-rows: auto 1fr; background: #fafafa;">
+    <header class="border-b px-6 py-3 flex items-center gap-3 bg-white">
+      <div class="font-bold mr-3">IvanPlaner</div>
+      <button class="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1.5 text-sm text-gray-500 w-80">
+        <span>🔍</span> Поиск или команда…
+        <span class="ml-auto text-xs border px-1.5 rounded">⌘K</span>
+      </button>
+      <div class="ml-auto flex items-center gap-2">
+        <button class="text-sm px-3 py-1.5 rounded-md hover:bg-gray-100">+ Быстрая задача</button>
+        <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+      </div>
+    </header>
+    <main class="p-6 overflow-auto">
+      <h2 class="text-2xl font-bold mb-1">Доброе утро, Иван 👋</h2>
+      <p class="text-gray-500 mb-6">Вторник, 26 мая · 7 задач на сегодня</p>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl border p-5 col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">⭐ Сегодня</h3>
+            <span class="chip">5 осталось</span>
+          </div>
+          <div class="task"><div class="cb"></div><span>Закончить отчёт Q2</span></div>
+          <div class="task"><div class="cb"></div><span>Тренировка ноги</span></div>
+          <div class="task"><div class="cb"></div><span>Продукты</span></div>
+        </div>
+        <div class="bg-white rounded-xl border p-5">
+          <h3 class="font-semibold mb-2">📥 Инбокс</h3>
+          <div class="text-4xl font-bold">12</div>
+          <p class="text-xs text-gray-500 mt-1">непросмотрено</p>
+        </div>
+        <div class="bg-white rounded-xl border p-5">
+          <h3 class="font-semibold mb-3">📅 Эта неделя</h3>
+          <div class="grid grid-cols-7 gap-1 text-center text-xs">
+            <div class="text-gray-400">П</div><div class="text-gray-400">В</div><div class="text-gray-400">С</div><div class="text-gray-400">Ч</div><div class="text-gray-400">П</div><div class="text-gray-400">С</div><div class="text-gray-400">В</div>
+            <div class="py-1 rounded bg-gray-100">3</div>
+            <div class="py-1 rounded bg-indigo-600 text-white font-bold">7</div>
+            <div class="py-1 rounded bg-gray-100">2</div>
+            <div class="py-1 rounded bg-gray-100">4</div>
+            <div class="py-1 rounded bg-gray-100">5</div>
+            <div class="py-1 rounded bg-gray-50">1</div>
+            <div class="py-1 rounded bg-gray-50">—</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border p-5">
+          <h3 class="font-semibold mb-3">📁 Проекты</h3>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Ремонт</span><span class="text-gray-400">8</span></div>
+            <div class="flex justify-between"><span>Книга</span><span class="text-gray-400">3</span></div>
+            <div class="flex justify-between"><span>Спорт</span><span class="text-gray-400">5</span></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border p-5">
+          <h3 class="font-semibold mb-2">🏆 Достижения</h3>
+          <div class="text-sm text-gray-500">Серия: <b class="text-gray-900">12 дней</b></div>
+          <div class="text-sm text-gray-500">Выполнено сегодня: <b class="text-gray-900">2/7</b></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- VARIANT 5: Calendar timeblocking -->
+  <h2 class="var">5. Google Calendar / Fantastical — календарь + timeblocking</h2>
+  <p class="desc">Календарь в центре, задачи перетаскиваются в слоты. Тренд time-blocking.</p>
+  <div class="frame mock" style="grid-template-columns: 60px 1fr 280px;">
+    <aside class="bg-gray-50 border-r flex flex-col items-center py-4 gap-3">
+      <div class="w-9 h-9 rounded bg-indigo-600 text-white grid place-items-center font-bold">И</div>
+      <div class="w-9 h-9 grid place-items-center rounded hover:bg-gray-200">📥</div>
+      <div class="w-9 h-9 grid place-items-center rounded bg-gray-200">⭐</div>
+      <div class="w-9 h-9 grid place-items-center rounded hover:bg-gray-200">📁</div>
+      <div class="w-9 h-9 grid place-items-center rounded hover:bg-gray-200">🎯</div>
+      <div class="mt-auto w-9 h-9 grid place-items-center rounded hover:bg-gray-200">⚙</div>
+    </aside>
+    <main class="flex flex-col">
+      <header class="border-b px-4 py-2 flex items-center gap-3">
+        <button class="text-sm px-2 py-1 rounded hover:bg-gray-100">‹</button>
+        <button class="text-sm font-semibold">26 мая — 1 июня</button>
+        <button class="text-sm px-2 py-1 rounded hover:bg-gray-100">›</button>
+        <div class="ml-4 flex bg-gray-100 rounded p-0.5 text-xs">
+          <button class="px-2 py-1 rounded bg-white shadow-sm">День</button>
+          <button class="px-2 py-1 text-gray-500">Неделя</button>
+          <button class="px-2 py-1 text-gray-500">Месяц</button>
+          <button class="px-2 py-1 text-gray-500">Год</button>
+          <button class="px-2 py-1 text-gray-500">Список</button>
+        </div>
+        <button class="ml-auto bg-indigo-600 text-white text-sm px-3 py-1 rounded">+ Событие</button>
+      </header>
+      <div class="grid grid-cols-7 text-xs text-center border-b">
+        <div class="py-1.5 border-r">Пн 26</div>
+        <div class="py-1.5 border-r font-bold text-indigo-600">Вт 27</div>
+        <div class="py-1.5 border-r">Ср 28</div>
+        <div class="py-1.5 border-r">Чт 29</div>
+        <div class="py-1.5 border-r">Пт 30</div>
+        <div class="py-1.5 border-r text-gray-400">Сб 31</div>
+        <div class="py-1.5 text-gray-400">Вс 1</div>
+      </div>
+      <div class="flex-1 grid grid-cols-7 text-xs relative overflow-hidden">
+        <div class="border-r relative">
+          <div class="absolute top-4 left-1 right-1 bg-emerald-100 border-l-2 border-emerald-500 rounded p-1">8:00 Тренировка</div>
+          <div class="absolute top-24 left-1 right-1 bg-indigo-100 border-l-2 border-indigo-500 rounded p-1">10:00 Отчёт Q2</div>
+        </div>
+        <div class="border-r relative bg-indigo-50/30">
+          <div class="absolute top-8 left-1 right-1 bg-rose-100 border-l-2 border-rose-500 rounded p-1">9:00 Встреча</div>
+          <div class="absolute top-32 left-1 right-1 bg-amber-100 border-l-2 border-amber-500 rounded p-1">12:00 Продукты</div>
+          <div class="absolute top-56 left-1 right-1 bg-emerald-100 border-l-2 border-emerald-500 rounded p-1">15:00 Спорт</div>
+        </div>
+        <div class="border-r"></div>
+        <div class="border-r relative">
+          <div class="absolute top-12 left-1 right-1 bg-indigo-100 border-l-2 border-indigo-500 rounded p-1">11:00 Звонок</div>
+        </div>
+        <div class="border-r"></div>
+        <div class="border-r bg-gray-50"></div>
+        <div class="bg-gray-50"></div>
+      </div>
+    </main>
+    <aside class="border-l p-3 flex flex-col">
+      <div class="font-semibold text-sm mb-2">📥 Инбокс</div>
+      <div class="task text-sm"><div class="cb"></div><span>Письма</span></div>
+      <div class="task text-sm"><div class="cb"></div><span>Прочитать главу 4</span></div>
+      <div class="task text-sm"><div class="cb"></div><span>Заказать книгу</span></div>
+      <div class="text-xs text-gray-400 mt-1 mb-3">Перетащи в календарь →</div>
+      <div class="font-semibold text-sm mb-2 mt-2">🔁 Повторяющиеся</div>
+      <div class="task text-sm"><div class="cb"></div><span>Утренний ритуал</span></div>
+      <div class="task text-sm"><div class="cb"></div><span>Планирование вечера</span></div>
+      <button class="mt-auto bg-gray-900 text-white text-sm py-2 rounded">+ Быстрая задача</button>
+    </aside>
+  </div>
+
+  <p class="text-gray-500 text-sm mt-10 mb-4">Скажи номер фаворита — углублю в HTML/Next.js маршрут.</p>
+</div>
+</body>
+</html>
