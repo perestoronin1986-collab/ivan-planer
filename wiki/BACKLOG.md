@@ -23,7 +23,7 @@
 - Валидация через Zod во всех server actions
 - Деплой на Vercel, автодеплой из `main`
 - **Offline / PWA** — Local-first: Dexie (IndexedDB) + outbox + sync engine (LWW по `updated_at`, soft delete `deleted_at`). Service Worker (precache, network-first navigations, cache-first static, /offline fallback). Manifest + иконки 192/512. tasks/inbox/sphere/project — мутации через local mutations API
-- **Единый дизайн внутренних экранов (2026-05-26)** — дизайн-токены в `globals.css` (фиолетовая brand-палитра, радиусы, тени), UI-компоненты `src/components/ui/` (PageShell, Section, Tile, ActionButton, Chip, EmptyState). Переведены: today, week, month, year, projects, spheres, tasks, recurring, inbox, search, done, settings. Гайд — `wiki/DESIGN.md`. Превью — `wiki/design-unified.html`. Модалки (AddTaskModal / AddRecurringTaskModal) и страница sphere-edit пока в старой палитре — на следующий заход.
+- **Единый дизайн внутренних экранов (2026-05-26)** — дизайн-токены в `globals.css` (фиолетовая brand-палитра, радиусы, тени), UI-компоненты `src/components/ui/` (PageShell, Section, Tile, ActionButton, Chip, EmptyState, formStyles). Переведены: today, week, month, year, projects, projects/done, spheres, spheres/[id], spheres/[id]/projects/[id], tasks, recurring, inbox, search, done, settings + модалки AddTaskModal/AddRecurringTaskModal + OverdueActionSelect + SphereSelectorForm + ProjectsList. Гайд — `wiki/DESIGN.md`. Превью — `wiki/design-unified.html`.
 
 ---
 

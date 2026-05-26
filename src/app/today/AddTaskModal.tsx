@@ -5,6 +5,14 @@ import { Square } from "lucide-react";
 import { useUserId } from "@/lib/local/useUser";
 import { addTaskLocal } from "@/lib/local/mutations";
 import type { OverdueAction } from "@/lib/db";
+import {
+  dialogClass,
+  inputClass,
+  selectClass,
+  labelClass,
+  primaryBtnClass,
+  ghostBtnClass,
+} from "@/components/ui/formStyles";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string };
@@ -89,14 +97,14 @@ export function AddTaskModal({
           reset();
           dialogRef.current?.showModal();
         }}
-        className={triggerClassName ?? "rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"}
+        className={triggerClassName ?? primaryBtnClass}
       >
         {triggerChildren ?? "+ Новая задача"}
       </button>
 
       <dialog
         ref={dialogRef}
-        className="w-full max-w-sm rounded-xl border border-neutral-200 p-6 shadow-xl backdrop:bg-black/40 dark:border-neutral-700 dark:bg-neutral-900"
+        className={dialogClass}
         onClick={(e) => {
           if (e.target === dialogRef.current) {
             reset();
@@ -104,28 +112,30 @@ export function AddTaskModal({
           }
         }}
       >
-        <h2 className="mb-4 text-base font-semibold">Новая задача</h2>
+        <h2 className="mb-4 text-base font-bold text-[var(--ink)]">
+          ✨ Новая задача
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           {error && <p className="text-xs text-red-500">{error}</p>}
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Название</label>
+            <label className={labelClass}>Название</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="Что нужно сделать?"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+              className={inputClass}
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Сфера</label>
+            <label className={labelClass}>Сфера</label>
             <select
               value={sphereId}
               onChange={(e) => setSphereId(e.target.value)}
               required
-              className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+              className={selectClass}
             >
               <option value="">— выберите сферу —</option>
               {spheres.map((s) => (
@@ -138,13 +148,11 @@ export function AddTaskModal({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">
-              Проект (необязательно)
-            </label>
+            <label className={labelClass}>Проект (необязательно)</label>
             <select
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+              className={selectClass}
             >
               <option value="">— без проекта —</option>
               {projects.map((p) => (
@@ -156,23 +164,23 @@ export function AddTaskModal({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Дата</label>
+            <label className={labelClass}>Дата</label>
             <input
               type="date"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+              className={inputClass}
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-neutral-500">Если просрочить</label>
+            <label className={labelClass}>Если просрочить</label>
             <select
               value={overdueAction}
               onChange={(e) =>
                 setOverdueAction(e.target.value as OverdueAction | "")
               }
-              className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+              className={selectClass}
             >
               <option value="">— не выбрано —</option>
               <option value="reschedule">Перенести на следующий день</option>
@@ -184,35 +192,43 @@ export function AddTaskModal({
             <button
               type="button"
               onClick={() => setChecklistEnabled((v) => !v)}
-              className={`flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-                checklistEnabled
-                  ? "bg-neutral-900 dark:bg-neutral-100"
-                  : "bg-neutral-200 dark:bg-neutral-700"
-              }`}
+              className="flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors"
+              style={{
+                background: checklistEnabled
+                  ? "var(--brand-600)"
+                  : "var(--brand-200)",
+              }}
               aria-label="Включить чек-лист"
             >
               <span
-                className={`ml-0.5 h-4 w-4 rounded-full bg-white transition-transform dark:bg-neutral-900 ${
+                className={`ml-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
                   checklistEnabled ? "translate-x-4" : ""
                 }`}
               />
             </button>
-            <span className="text-xs text-neutral-500">Включить чек-лист</span>
+            <span className="text-xs text-muted">Включить чек-лист</span>
           </div>
 
           {checklistEnabled && (
-            <div className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+            <div
+              className="space-y-2 rounded-[10px] p-3"
+              style={{
+                background: "var(--brand-50)",
+                border: "1px solid var(--brand-200)",
+              }}
+            >
               {items.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <Square
                     size={14}
-                    className="flex-shrink-0 text-neutral-300 dark:text-neutral-600"
+                    className="flex-shrink-0"
+                    style={{ color: "var(--brand-300)" }}
                   />
                   <input
                     value={item}
                     onChange={(e) => updateItem(i, e.target.value)}
                     placeholder={`Пункт ${i + 1}`}
-                    className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800"
+                    className="min-w-0 flex-1 rounded-[8px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm outline-none focus:border-[var(--brand-500)]"
                   />
                 </div>
               ))}
@@ -220,7 +236,8 @@ export function AddTaskModal({
                 <button
                   type="button"
                   onClick={() => setItems((p) => [...p, ""])}
-                  className="ml-5 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="ml-5 text-xs"
+                  style={{ color: "var(--brand-600)" }}
                 >
                   + добавить строчку
                 </button>
@@ -235,14 +252,11 @@ export function AddTaskModal({
                 reset();
                 dialogRef.current?.close();
               }}
-              className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className={`flex-1 ${ghostBtnClass}`}
             >
               Отмена
             </button>
-            <button
-              type="submit"
-              className="flex-1 rounded bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
-            >
+            <button type="submit" className={`flex-1 ${primaryBtnClass}`}>
               Добавить
             </button>
           </div>

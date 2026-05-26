@@ -28,8 +28,8 @@ export function SphereSelectorForm({
           });
         }
       }}
-      className={`text-xs border border-neutral-200 rounded px-2 py-1 outline-none bg-transparent hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 cursor-pointer ${
-        isPending ? "opacity-50" : "text-neutral-500"
+      className={`text-xs border border-[var(--brand-200)] rounded-[8px] px-2 py-1 outline-none bg-white cursor-pointer ${
+        isPending ? "opacity-50" : "text-[var(--brand-600)]"
       }`}
     >
       {spheres.map((s) => (

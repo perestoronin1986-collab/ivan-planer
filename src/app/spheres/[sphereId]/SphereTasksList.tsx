@@ -33,7 +33,7 @@ export function SphereTasksList({ sphereId }: { sphereId: string }) {
 
   if (tasks.length === 0) {
     return (
-      <p className="py-2 text-sm text-neutral-500">Нет задач.</p>
+      <p className="py-2 text-sm text-muted">Нет задач.</p>
     );
   }
 

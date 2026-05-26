@@ -5,6 +5,13 @@ import { RRule } from "rrule";
 import { format } from "date-fns";
 import { createRecurringTaskLocal } from "@/lib/local/mutations";
 import { useUserId } from "@/lib/local/useUser";
+import {
+  dialogClass,
+  inputClass,
+  labelClass,
+  primaryBtnClass,
+  ghostBtnClass,
+} from "@/components/ui/formStyles";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string; sphere_id: string };
@@ -165,26 +172,27 @@ export function AddRecurringTaskModal({
     }
   };
 
-  const inputCls =
-    "w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800";
+  const inputCls = inputClass;
   const tabCls = (active: boolean) =>
-    `px-3 py-1 rounded text-xs font-medium transition-colors ${
+    `px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-colors ${
       active
-        ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-        : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        ? "bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] text-white shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
+        : "border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-900)]"
     }`;
   const dayCls = (active: boolean) =>
-    `w-9 h-9 rounded text-xs font-medium transition-colors ${
+    `w-9 h-9 rounded-[10px] text-xs font-semibold transition-colors ${
       active
-        ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-        : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        ? "bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] text-white shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
+        : "border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-900)]"
     }`;
+  const numCls =
+    "rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]";
 
   return (
     <>
       <button
         onClick={() => dialogRef.current?.showModal()}
-        className={triggerClassName ?? "rounded border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"}
+        className={triggerClassName ?? ghostBtnClass}
       >
         {triggerChildren ?? "↻ Регулярная задача"}
       </button>
@@ -192,17 +200,17 @@ export function AddRecurringTaskModal({
       <dialog
         ref={dialogRef}
         aria-labelledby="rt-dialog-title"
-        className="w-full max-w-md rounded-xl border border-neutral-200 p-6 shadow-xl backdrop:bg-black/40 dark:border-neutral-700 dark:bg-neutral-900"
+        className={dialogClass.replace("max-w-sm", "max-w-md")}
         onClick={(e) => {
           if (e.target === dialogRef.current) { resetForm(); dialogRef.current?.close(); }
         }}
       >
-        <h2 id="rt-dialog-title" className="mb-4 text-base font-semibold">Регулярная задача</h2>
+        <h2 id="rt-dialog-title" className="mb-4 text-base font-bold text-[var(--ink)]">🔄 Регулярная задача</h2>
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
 
           {/* Title */}
           <div className="space-y-1">
-            <label htmlFor="rt-title" className="text-xs text-neutral-500">Название</label>
+            <label htmlFor="rt-title" className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Название</label>
             <input
               id="rt-title"
               required
@@ -215,13 +223,13 @@ export function AddRecurringTaskModal({
 
           {/* Sphere */}
           <div className="space-y-1">
-            <label htmlFor="rt-sphere" className="text-xs text-neutral-500">Сфера</label>
+            <label htmlFor="rt-sphere" className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Сфера</label>
             <select
               id="rt-sphere"
               required
               value={sphereId}
               onChange={(e) => setSphereId(e.target.value)}
-              className={inputCls + " bg-white dark:bg-neutral-800"}
+              className={inputCls}
             >
               <option value="">— выберите сферу —</option>
               {spheres.map((s) => (
@@ -235,12 +243,12 @@ export function AddRecurringTaskModal({
 
           {/* Project */}
           <div className="space-y-1">
-            <label htmlFor="rt-project" className="text-xs text-neutral-500">Проект (необязательно)</label>
+            <label htmlFor="rt-project" className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Проект (необязательно)</label>
             <select
               id="rt-project"
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className={inputCls + " bg-white dark:bg-neutral-800"}
+              className={inputCls}
             >
               <option value="">— без проекта —</option>
               {projects.map((p) => (
@@ -253,7 +261,7 @@ export function AddRecurringTaskModal({
 
           {/* Pattern tabs */}
           <div className="space-y-3">
-            <label className="text-xs text-neutral-500">Когда повторять</label>
+            <label className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Когда повторять</label>
             <div className="flex gap-2 flex-wrap">
               <button type="button" className={tabCls(pattern === "weekly")} onClick={() => setPattern("weekly")}>
                 Дни недели
@@ -291,7 +299,7 @@ export function AddRecurringTaskModal({
                     max={52}
                     value={weekInterval}
                     onChange={(e) => setWeekInterval(Math.max(1, Number(e.target.value)))}
-                    className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                    className="w-14 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]"
                   />
                   <span>нед.</span>
                 </div>
@@ -320,7 +328,7 @@ export function AddRecurringTaskModal({
                     max={12}
                     value={monthInterval}
                     onChange={(e) => setMonthInterval(Math.max(1, Number(e.target.value)))}
-                    className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                    className="w-14 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]"
                   />
                   <span>мес.</span>
                 </div>
@@ -335,7 +343,7 @@ export function AddRecurringTaskModal({
                   min={1}
                   value={dayInterval}
                   onChange={(e) => setDayInterval(Math.max(1, Number(e.target.value)))}
-                  className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                  className="w-14 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]"
                 />
                 <span>дней</span>
               </div>
@@ -351,18 +359,18 @@ export function AddRecurringTaskModal({
                     max={50}
                     value={yearInterval}
                     onChange={(e) => setYearInterval(Math.max(1, Number(e.target.value)))}
-                    className="w-14 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                    className="w-14 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]"
                   />
                   <span>год(а)</span>
                 </div>
-                <p className="text-xs text-neutral-500">Повторяется в день старта каждый год.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Повторяется в день старта каждый год.</p>
               </div>
             )}
           </div>
 
           {/* Start date */}
           <div className="space-y-1">
-            <label htmlFor="rt-start" className="text-xs text-neutral-500">С какого числа</label>
+            <label htmlFor="rt-start" className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">С какого числа</label>
             <input
               id="rt-start"
               type="date"
@@ -374,7 +382,7 @@ export function AddRecurringTaskModal({
 
           {/* End condition */}
           <div className="space-y-2">
-            <label className="text-xs text-neutral-500">Завершить повторение</label>
+            <label className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">Завершить повторение</label>
             <div className="flex gap-2">
               <button type="button" className={tabCls(endType === "date")} onClick={() => setEndType("date")}>
                 До даты
@@ -399,7 +407,7 @@ export function AddRecurringTaskModal({
                   max={500}
                   value={endCount}
                   onChange={(e) => setEndCount(Math.max(1, Number(e.target.value)))}
-                  className="w-20 rounded border border-neutral-300 px-2 py-1 text-sm text-center dark:border-neutral-700 dark:bg-neutral-800"
+                  className="w-20 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]"
                 />
                 <span>раз</span>
               </div>
@@ -408,7 +416,7 @@ export function AddRecurringTaskModal({
 
           {/* Overdue action */}
           <div className="space-y-2">
-            <label className="text-xs text-neutral-500">При пропуске</label>
+            <label className="text-[10px] font-bold uppercase tracking-[1px] text-[var(--brand-400)]">При пропуске</label>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -429,16 +437,30 @@ export function AddRecurringTaskModal({
 
           {/* Preview */}
           {preview.length > 0 && (
-            <div className="space-y-1 rounded border border-neutral-200 p-3 dark:border-neutral-700">
-              <p className="text-xs font-medium text-neutral-500">
+            <div
+              className="space-y-1 rounded-[10px] p-3"
+              style={{
+                background: "var(--brand-50)",
+                border: "1px solid var(--brand-200)",
+              }}
+            >
+              <p
+                className="text-[10px] font-bold uppercase tracking-[1px]"
+                style={{ color: "var(--brand-600)" }}
+              >
                 Вхождений: {preview.length}
               </p>
-              <div className="text-xs text-neutral-600 dark:text-neutral-400 space-y-0.5">
+              <div
+                className="text-xs space-y-0.5"
+                style={{ color: "var(--brand-900)" }}
+              >
                 {preview.slice(0, 10).map((d, i) => (
                   <div key={i}>{format(d, "dd.MM.yyyy")}</div>
                 ))}
                 {preview.length > 10 && (
-                  <div className="text-neutral-400">+{preview.length - 10} ещё</div>
+                  <div style={{ color: "var(--muted)" }}>
+                    +{preview.length - 10} ещё
+                  </div>
                 )}
               </div>
             </div>
@@ -452,14 +474,14 @@ export function AddRecurringTaskModal({
             <button
               type="button"
               onClick={() => { resetForm(); dialogRef.current?.close(); }}
-              className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className={`flex-1 ${ghostBtnClass}`}
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={pending || !preview.length}
-              className="flex-1 rounded bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-900"
+              className={`flex-1 ${primaryBtnClass} disabled:opacity-40`}
             >
               {pending ? "Создание..." : `Создать (${preview.length})`}
             </button>

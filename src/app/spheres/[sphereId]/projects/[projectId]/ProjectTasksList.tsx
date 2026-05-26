@@ -44,14 +44,17 @@ export function ProjectTasksList({
           />
         ))}
         {todo.length === 0 && done.length === 0 && (
-          <p className="py-2 text-sm text-neutral-500">Нет задач.</p>
+          <p className="py-2 text-sm text-muted">Нет задач.</p>
         )}
       </section>
 
       {done.length > 0 && (
         <section className="space-y-1.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">
-            Выполнено ({done.length})
+          <p
+            className="text-[10px] font-bold uppercase tracking-[1px]"
+            style={{ color: "var(--brand-400)" }}
+          >
+            ✔ Выполнено ({done.length})
           </p>
           {done.map((t) => (
             <TaskItem

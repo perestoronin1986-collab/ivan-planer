@@ -79,26 +79,41 @@ export function ProjectsList({
 
   if (projects.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-neutral-500">
+      <p className="py-4 text-center text-sm text-muted">
         Нет проектов. Создай в разделе Сферы.
       </p>
     );
   }
 
+  const statusChip = (status: string) => {
+    if (status === "done")
+      return { bg: "#d1fae5", fg: "#065f46", label: "готово" };
+    if (status === "paused")
+      return { bg: "#fef3c7", fg: "#92400e", label: "на паузе" };
+    return { bg: "var(--brand-100)", fg: "var(--brand-600)", label: "в процессе" };
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-2">
       {projects.map((p) => {
         const all = tasksByProject.get(p.id) ?? [];
         const todo = all.filter((t: { status: string }) => t.status !== "done");
         const done = all.filter((t: { status: string }) => t.status === "done");
         const sphere = sphereById.get(p.sphere_id);
+        const chip = statusChip(p.status);
         return (
           <div
             key={p.id}
-            className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800"
+            className="overflow-hidden"
+            style={{
+              background: "#fff",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--r-card)",
+              boxShadow: "var(--shadow-card)",
+            }}
           >
-            <div className="bg-neutral-50 px-4 py-3 dark:bg-neutral-900">
-              <div className="flex items-center gap-3">
+            <div className="px-3 py-3" style={{ background: "var(--brand-50)" }}>
+              <div className="flex items-center gap-2">
                 <form
                   action={toggleProjectDone.bind(
                     null,
@@ -114,11 +129,11 @@ export function ProjectsList({
                         ? "Вернуть в работу"
                         : "Отметить выполненным"
                     }
-                    className={`flex-shrink-0 ${
-                      p.status === "done"
-                        ? "text-emerald-500"
-                        : "text-neutral-300 hover:text-emerald-500"
-                    }`}
+                    className="flex-shrink-0"
+                    style={{
+                      color:
+                        p.status === "done" ? "#10b981" : "var(--brand-300)",
+                    }}
                   >
                     {p.status === "done" ? (
                       <CheckCircle2 size={18} />
@@ -135,11 +150,15 @@ export function ProjectsList({
                 )}
                 <Link
                   href={`/spheres/${p.sphere_id}/projects/${p.id}`}
-                  className={`min-w-0 flex-1 break-words font-medium hover:underline ${
-                    p.status === "done"
-                      ? "text-neutral-400 line-through"
-                      : ""
-                  }`}
+                  className="min-w-0 flex-1 break-words font-medium text-sm"
+                  style={{
+                    color:
+                      p.status === "done"
+                        ? "var(--muted)"
+                        : "var(--brand-900)",
+                    textDecoration:
+                      p.status === "done" ? "line-through" : "none",
+                  }}
                 >
                   {p.name}
                 </Link>
@@ -160,7 +179,8 @@ export function ProjectsList({
                         return next;
                       })
                     }
-                    className="flex flex-shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-xs text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+                    className="flex flex-shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-xs"
+                    style={{ color: "var(--brand-400)" }}
                     title={hiddenDone.has(p.id) ? "Показать выполненные" : "Скрыть выполненные"}
                   >
                     {hiddenDone.has(p.id) ? (
@@ -172,22 +192,13 @@ export function ProjectsList({
                   </button>
                 )}
                 <span
-                  className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                    p.status === "done"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : p.status === "paused"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
-                  }`}
+                  className="flex-shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  style={{ background: chip.bg, color: chip.fg }}
                 >
-                  {p.status === "done"
-                    ? "готово"
-                    : p.status === "paused"
-                      ? "на паузе"
-                      : "в процессе"}
+                  {chip.label}
                 </span>
               </div>
-              <div className="mt-2 pl-8">
+              <div className="mt-2 pl-7">
                 <SphereSelectorForm
                   projectId={p.id}
                   currentSphereId={p.sphere_id}
@@ -206,25 +217,29 @@ export function ProjectsList({
                     showProject={false}
                   />
                 ))}
-                {!hiddenDone.has(p.id) && done.map((t: { id: string }) => (
-                  <TaskItem
-                    key={t.id}
-                    task={t as never}
-                    sphere={sphere}
-                    showProject={false}
-                  />
-                ))}
+                {!hiddenDone.has(p.id) &&
+                  done.map((t: { id: string }) => (
+                    <TaskItem
+                      key={t.id}
+                      task={t as never}
+                      sphere={sphere}
+                      showProject={false}
+                    />
+                  ))}
               </div>
             )}
 
             {all.length === 0 && (
-              <p className="px-4 py-2 text-xs text-neutral-400">Нет задач</p>
+              <p className="px-4 py-2 text-xs" style={{ color: "var(--brand-300)" }}>
+                Нет задач
+              </p>
             )}
 
             {!doneOnly && (
               <form
                 action={createTask}
-                className="flex flex-col gap-2 border-t border-neutral-100 px-4 py-2 dark:border-neutral-800 sm:flex-row"
+                className="flex flex-col gap-2 px-3 py-2"
+                style={{ borderTop: "1px solid var(--brand-100)" }}
               >
                 <input type="hidden" name="projectId" value={p.id} />
                 <input type="hidden" name="sphereId" value={p.sphere_id} />
@@ -232,20 +247,20 @@ export function ProjectsList({
                   name="title"
                   required
                   placeholder="+ новая задача…"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400 sm:flex-1"
+                  className="w-full bg-transparent text-sm outline-none"
                 />
                 <div className="flex gap-2">
                   <input
                     name="dueAt"
                     type="date"
-                    className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700 sm:flex-none"
+                    className="min-w-0 flex-1 rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-xs outline-none focus:border-[var(--brand-500)]"
                   />
                   <OverdueActionSelect />
                   <button
                     type="submit"
-                    className="rounded bg-neutral-900 px-3 py-1 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+                    className="rounded-[10px] bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] px-3 py-1 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
                   >
-                    Добавить
+                    +
                   </button>
                 </div>
               </form>

@@ -45,10 +45,13 @@ export default function Page() {
 }
 ```
 
-## Что ещё не унифицировано
+## Доп. модуль: `formStyles.ts`
 
-- Диалоги `AddTaskModal`, `AddRecurringTaskModal`, форма sphere edit `[sphereId]/page.tsx` — серая палитра внутри. Кандидаты на следующий заход.
-- Компонент `TaskItem` — оставлен как есть, визуально совместим.
+Готовые класс-строки для форм/диалогов: `dialogClass`, `inputClass`, `selectClass`, `labelClass`, `primaryBtnClass`, `ghostBtnClass`. Использовать в модалках и инлайн-формах.
+
+## Статус унификации
+
+Все экраны и модалки переведены (2026-05-26). Компонент `TaskItem` оставлен как есть — визуально совместим.
 
 ## Превью
 
