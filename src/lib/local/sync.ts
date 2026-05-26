@@ -240,14 +240,15 @@ export async function runSync(): Promise<{
   _syncing = true;
   try {
     const push = await pushOutbox();
-    let pulled = 0;
-    for (const t of TABLES) {
-      try {
-        pulled += await pullTable(t);
-      } catch (err) {
-        console.error(`pull ${t} failed`, err);
-      }
-    }
+    const results = await Promise.all(
+      TABLES.map((t) =>
+        pullTable(t).catch((err) => {
+          console.error(`pull ${t} failed`, err);
+          return 0;
+        }),
+      ),
+    );
+    const pulled = results.reduce((sum, n) => sum + n, 0);
     return { pushed: push.ok, pulled, failed: push.fail, dead: push.dead };
   } finally {
     _syncing = false;

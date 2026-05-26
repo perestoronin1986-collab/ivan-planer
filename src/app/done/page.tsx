@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 import { PageShell, Section, EmptyState } from "@/components/ui";
 
@@ -36,6 +37,11 @@ export default function DonePage() {
     return { done, sphereById, projectById };
   });
 
+  const done = data?.done ?? [];
+  const sphereById = data?.sphereById ?? new Map();
+  const projectById = data?.projectById ?? new Map();
+  const subtasksByParentId = useSubtasksMap(done.map((t) => t.id));
+
   if (userId === undefined) {
     return (
       <PageShell title="Выполнено" emoji="✔">
@@ -48,10 +54,6 @@ export default function DonePage() {
       </PageShell>
     );
   }
-
-  const done = data?.done ?? [];
-  const sphereById = data?.sphereById ?? new Map();
-  const projectById = data?.projectById ?? new Map();
 
   return (
     <PageShell
@@ -70,6 +72,7 @@ export default function DonePage() {
                 task={t}
                 sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
                 project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+                subtasks={subtasksByParentId.get(t.id)}
               />
             ))}
           </div>

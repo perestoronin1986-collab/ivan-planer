@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { CheckSquare, Square, Pencil, Check, X } from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { localDb } from "@/lib/local/db";
 import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 import {
   toggleTaskStatusLocal,
@@ -19,6 +17,7 @@ export function TaskItem({
   task,
   sphere,
   project,
+  subtasks,
   accentDate,
   showSphere = true,
   showProject = true,
@@ -27,6 +26,7 @@ export function TaskItem({
   task: TaskRow;
   sphere?: SphereLite | null;
   project?: ProjectLite | null;
+  subtasks?: TaskRow[];
   accentDate?: boolean;
   showSphere?: boolean;
   showProject?: boolean;
@@ -38,18 +38,6 @@ export function TaskItem({
   const done = task.status === "done";
   const overdue =
     task.due_at && !done ? new Date(task.due_at) < new Date() : false;
-
-  const subtasks = useLiveQuery(
-    async () => {
-      if (task.rrule) return [];
-      return localDb()
-        .task.where("parent_id")
-        .equals(task.id)
-        .filter((t) => !t.deleted_at)
-        .sortBy("created_at");
-    },
-    [task.id, task.rrule],
-  );
 
   async function saveTitle() {
     const next = draft.trim();
@@ -67,7 +55,7 @@ export function TaskItem({
     setEditing(false);
   }
 
-  const checklistItems = subtasks ?? [];
+  const checklistItems = task.rrule ? [] : subtasks ?? [];
   const checklistDone = checklistItems.filter((s) => s.status === "done").length;
   const hasChecklist = checklistItems.length > 0;
 

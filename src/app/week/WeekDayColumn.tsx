@@ -2,14 +2,16 @@
 
 import { useRef, useState } from "react";
 import { Square } from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
 import { addTaskLocal } from "@/lib/local/mutations";
 import { TaskItem } from "@/components/TaskItem";
+import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string };
+
+type SphereLite = Pick<SphereRow, "id" | "name" | "color" | "icon">;
+type ProjectLite = Pick<ProjectRow, "id" | "name">;
 
 export function WeekDayColumn({
   dayLabel,
@@ -17,12 +19,20 @@ export function WeekDayColumn({
   today,
   spheres,
   projects,
+  tasks,
+  sphereById,
+  projectById,
+  subtasksByParentId,
 }: {
   dayLabel: string;
   dayKey: string;
   today: boolean;
   spheres: Sphere[];
   projects: Project[];
+  tasks: TaskRow[];
+  sphereById: Map<string, SphereLite>;
+  projectById: Map<string, ProjectLite>;
+  subtasksByParentId: Map<string, TaskRow[]>;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const userId = useUserId();
@@ -79,35 +89,6 @@ export function WeekDayColumn({
     setItems((prev) => prev.map((x, i) => (i === index ? value : x)));
   }
 
-  const data = useLiveQuery(async () => {
-    const db = localDb();
-    const [tasks, allSpheres, allProjects] = await Promise.all([
-      db.task.toArray(),
-      db.sphere.toArray(),
-      db.project.toArray(),
-    ]);
-    const sphereById = new Map(allSpheres.map((s) => [s.id, s]));
-    const projectById = new Map(allProjects.map((p) => [p.id, p]));
-    const templateIds = new Set(tasks.filter((t) => t.rrule).map((t) => t.id));
-    const dayStartMs = new Date(`${dayKey}T00:00:00`).getTime();
-    const dayEndMs = new Date(`${dayKey}T23:59:59.999`).getTime();
-    const dayTasks = tasks
-      .filter(
-        (t) =>
-          !t.deleted_at &&
-          t.due_at &&
-          new Date(t.due_at).getTime() >= dayStartMs &&
-          new Date(t.due_at).getTime() <= dayEndMs &&
-          (!t.parent_id || templateIds.has(t.parent_id)),
-      )
-      .sort((a, b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
-    return { dayTasks, sphereById, projectById };
-  }, [dayKey]);
-
-  const tasks = data?.dayTasks ?? [];
-  const sphereById = data?.sphereById ?? new Map();
-  const projectById = data?.projectById ?? new Map();
-
   const cardStyle: React.CSSProperties = today
     ? {
         background: "var(--grad-card-accent)",
@@ -152,6 +133,7 @@ export function WeekDayColumn({
           task={t}
           sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
           project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+          subtasks={subtasksByParentId.get(t.id)}
           showDate={false}
         />
       ))}

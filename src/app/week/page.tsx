@@ -11,7 +11,7 @@ import {
   isToday,
 } from "date-fns";
 import { ru } from "date-fns/locale";
-import { WeekDayColumn } from "./WeekDayColumn";
+import { WeekGrid } from "./WeekGrid";
 import { PageShell } from "@/components/ui";
 
 export default async function WeekPage({
@@ -29,9 +29,9 @@ export default async function WeekPage({
 
   await requireUser();
   const supabase = await createClient();
-  await processOverdueTasks(supabase);
 
-  const [{ data: spheresData }, { data: projectsData }] = await Promise.all([
+  const [, { data: spheresData }, { data: projectsData }] = await Promise.all([
+    processOverdueTasks(supabase),
     supabase
       .from("sphere")
       .select("id, name, icon")
@@ -68,22 +68,16 @@ export default async function WeekPage({
         </Link>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const dayLabel = format(day, "EEEE, d MMMM", { locale: ru });
-          return (
-            <WeekDayColumn
-              key={key}
-              dayLabel={dayLabel}
-              dayKey={key}
-              today={isToday(day)}
-              spheres={spheres}
-              projects={projects}
-            />
-          );
-        })}
-      </div>
+      <WeekGrid
+        days={days.map((day) => ({
+          key: format(day, "yyyy-MM-dd"),
+          label: format(day, "EEEE, d MMMM", { locale: ru }),
+          today: isToday(day),
+        }))}
+        spheres={spheres}
+        projects={projects}
+      />
+
     </PageShell>
   );
 }

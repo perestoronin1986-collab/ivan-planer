@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 import type { InboxItemRow, TaskRow } from "@/lib/db";
 
@@ -74,6 +75,10 @@ export function SearchClient() {
     return { taskHits, inboxHits };
   }, [data, q, hideDone]);
 
+  const subtasksByParentId = useSubtasksMap(
+    results?.taskHits.map((h) => h.task.id) ?? [],
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -126,6 +131,7 @@ export function SearchClient() {
                   ? data?.projectById.get(task.project_id) ?? null
                   : null
               }
+              subtasks={subtasksByParentId.get(task.id)}
             />
           ))}
         </section>

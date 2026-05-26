@@ -2,6 +2,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 
 export function SphereTasksList({ sphereId }: { sphereId: string }) {
@@ -31,6 +32,8 @@ export function SphereTasksList({ sphereId }: { sphereId: string }) {
   const tasks = data?.live ?? [];
   const sphere = data?.sphere ?? null;
 
+  const subtasksByParentId = useSubtasksMap(tasks.map((t) => t.id));
+
   if (tasks.length === 0) {
     return (
       <p className="py-2 text-sm text-muted">Нет задач.</p>
@@ -44,6 +47,7 @@ export function SphereTasksList({ sphereId }: { sphereId: string }) {
           key={t.id}
           task={t}
           sphere={sphere}
+          subtasks={subtasksByParentId.get(t.id)}
           showSphere={false}
           showProject={false}
         />

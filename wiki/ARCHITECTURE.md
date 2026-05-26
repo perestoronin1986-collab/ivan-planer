@@ -162,11 +162,13 @@ Constraint: у задачи обязан быть хотя бы один из: `
 |------|-----------|
 | `today/AddTaskModal.tsx` | Диалог создания задачи на сегодня |
 | `today/AddRecurringTaskModal.tsx` | Диалог создания повторяющейся задачи |
-| `week/WeekDayColumn.tsx` | Колонка дня в недельной сетке с кнопкой `+` |
+| `week/WeekGrid.tsx` | Контейнер недели/выбранного дня. Один `useLiveQuery` на все колонки, индексный `between()` по `due_at`, передача `tasks/sphereById/projectById/subtasksByParentId` пропсами |
+| `week/WeekDayColumn.tsx` | Презентационная колонка дня (без своих Dexie-запросов) с кнопкой `+` |
 | `components/SphereSelectorForm.tsx` | Форма выбора сферы |
 | `components/OverdueActionSelect.tsx` | Селект "что делать при просрочке" |
 | `components/ServiceWorkerRegister.tsx` | Регистрация `/sw.js` + слушатель `RUN_OUTBOX_SYNC` |
 | `components/SyncProvider.tsx` | `installSyncListeners()` на маунт top-level layout |
+| `lib/local/useSubtasks.ts` | Хук `useSubtasksMap(parentIds)` — один `anyOf` запрос для всех subtasks. Заменяет per-task `useLiveQuery` в `TaskItem` |
 
 ---
 

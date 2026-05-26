@@ -2,33 +2,44 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 import { Section, EmptyState } from "@/components/ui";
 
 export function TodayList() {
   const data = useLiveQuery(async () => {
     const db = localDb();
-    const [tasks, spheres, projects] = await Promise.all([
-      db.task.toArray(),
+    const todayStartMs = new Date().setHours(0, 0, 0, 0);
+    const todayEndMs = new Date().setHours(23, 59, 59, 999);
+    const todayEndIso = new Date(todayEndMs).toISOString();
+
+    const [dueTasks, spheres, projects] = await Promise.all([
+      db.task
+        .where("due_at")
+        .belowOrEqual(todayEndIso)
+        .toArray(),
       db.sphere.toArray(),
       db.project.toArray(),
     ]);
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
-    const todayStartMs = new Date().setHours(0, 0, 0, 0);
-    const todayEndMs = new Date().setHours(23, 59, 59, 999);
-    const live = tasks
-      .filter(
-        (t) => !t.deleted_at && t.status !== "done" && t.due_at,
-      )
-      .filter((t) => new Date(t.due_at!).getTime() <= todayEndMs)
-      .sort((a, b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
-    const overdue = live.filter(
-      (t) => new Date(t.due_at!).getTime() < todayStartMs,
-    );
-    const today = live.filter(
-      (t) => new Date(t.due_at!).getTime() >= todayStartMs,
-    );
+
+    const overdue: typeof dueTasks = [];
+    const today: typeof dueTasks = [];
+    for (const t of dueTasks) {
+      if (t.deleted_at) continue;
+      if (t.status === "done") continue;
+      if (!t.due_at) continue;
+      const ms = new Date(t.due_at).getTime();
+      if (ms > todayEndMs) continue;
+      if (ms < todayStartMs) overdue.push(t);
+      else today.push(t);
+    }
+    const cmp = (a: { due_at: string | null }, b: { due_at: string | null }) =>
+      (a.due_at ?? "").localeCompare(b.due_at ?? "");
+    overdue.sort(cmp);
+    today.sort(cmp);
+
     return { overdue, today, sphereById, projectById };
   });
 
@@ -36,6 +47,9 @@ export function TodayList() {
   const today = data?.today ?? [];
   const sphereById = data?.sphereById ?? new Map();
   const projectById = data?.projectById ?? new Map();
+
+  const parentIds = [...overdue, ...today].map((t) => t.id);
+  const subtasksByParentId = useSubtasksMap(parentIds);
 
   const empty = overdue.length === 0 && today.length === 0;
 
@@ -58,6 +72,7 @@ export function TodayList() {
                 project={
                   t.project_id ? projectById.get(t.project_id) ?? null : null
                 }
+                subtasks={subtasksByParentId.get(t.id)}
                 accentDate
               />
             ))}
@@ -76,6 +91,7 @@ export function TodayList() {
                 project={
                   t.project_id ? projectById.get(t.project_id) ?? null : null
                 }
+                subtasks={subtasksByParentId.get(t.id)}
               />
             ))}
           </div>

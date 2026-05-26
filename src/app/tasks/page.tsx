@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 import { AddTaskModal } from "@/app/today/AddTaskModal";
 import { PageShell, Section, EmptyState } from "@/components/ui";
@@ -37,6 +38,12 @@ export default function TasksPage() {
     return { live, sphereById, projectById };
   });
 
+  const tasks = data?.live ?? [];
+  const sphereById = data?.sphereById ?? new Map();
+  const projectById = data?.projectById ?? new Map();
+  const todo = tasks.filter((t) => t.status !== "done");
+  const subtasksByParentId = useSubtasksMap(todo.map((t) => t.id));
+
   if (userId === undefined) {
     return (
       <PageShell title="Активные" emoji="⚡">
@@ -49,11 +56,6 @@ export default function TasksPage() {
       </PageShell>
     );
   }
-
-  const tasks = data?.live ?? [];
-  const sphereById = data?.sphereById ?? new Map();
-  const projectById = data?.projectById ?? new Map();
-  const todo = tasks.filter((t) => t.status !== "done");
 
   const spheres = data ? Array.from(data.sphereById.values()).map((s) => ({ id: s.id, name: s.name, icon: s.icon ?? null })) : [];
   const projects = data ? Array.from(data.projectById.values()).map((p) => ({ id: p.id, name: p.name })) : [];
@@ -85,6 +87,7 @@ export default function TasksPage() {
                 task={t}
                 sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
                 project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+                subtasks={subtasksByParentId.get(t.id)}
               />
             ))}
           </div>

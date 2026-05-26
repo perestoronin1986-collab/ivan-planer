@@ -16,7 +16,7 @@ import {
   isValid,
 } from "date-fns";
 import { ru } from "date-fns/locale";
-import { WeekDayColumn } from "../week/WeekDayColumn";
+import { WeekGrid } from "../week/WeekGrid";
 import { PageShell, Section } from "@/components/ui";
 
 type Row = {
@@ -49,9 +49,8 @@ export default async function MonthPage({
   await requireUser();
   const supabase = await createClient();
 
-  await processOverdueTasks(supabase);
-
-  const [{ data, error }, { data: spheresData }, { data: projectsData }] = await Promise.all([
+  const [, { data, error }, { data: spheresData }, { data: projectsData }] = await Promise.all([
+    processOverdueTasks(supabase),
     supabase
       .from("task")
       .select("id, title, status, due_at, carry_count, sphere:sphere_id(name, color, icon)")
@@ -166,10 +165,14 @@ export default async function MonthPage({
         </div>
       </Section>
 
-      <WeekDayColumn
-        dayLabel={selectedLabel}
-        dayKey={selectedKey}
-        today={isToday(selectedDate)}
+      <WeekGrid
+        days={[
+          {
+            key: selectedKey,
+            label: selectedLabel,
+            today: isToday(selectedDate),
+          },
+        ]}
         spheres={spheres}
         projects={projects}
       />

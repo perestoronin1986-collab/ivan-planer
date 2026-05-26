@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CheckCircle2, Circle, ChevronDown, ChevronRight } from "lucide-react";
 import { localDb } from "@/lib/local/db";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 import { SphereSelectorForm } from "@/components/SphereSelectorForm";
 import { OverdueActionSelect } from "@/components/OverdueActionSelect";
@@ -76,6 +77,12 @@ export function ProjectsList({
   const projects = data?.liveProjects ?? [];
   const tasksByProject = data?.tasksByProject ?? new Map();
   const sphereById = data?.sphereById ?? new Map();
+
+  const allTaskIds: string[] = [];
+  for (const arr of tasksByProject.values()) {
+    for (const t of arr as { id: string }[]) allTaskIds.push(t.id);
+  }
+  const subtasksByParentId = useSubtasksMap(allTaskIds);
 
   if (projects.length === 0) {
     return (
@@ -214,6 +221,7 @@ export function ProjectsList({
                     key={t.id}
                     task={t as never}
                     sphere={sphere}
+                    subtasks={subtasksByParentId.get(t.id)}
                     showProject={false}
                   />
                 ))}
@@ -223,6 +231,7 @@ export function ProjectsList({
                       key={t.id}
                       task={t as never}
                       sphere={sphere}
+                      subtasks={subtasksByParentId.get(t.id)}
                       showProject={false}
                     />
                   ))}

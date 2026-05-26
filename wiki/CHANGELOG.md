@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-05-26 — Перф-рефакторинг IndexedDB слоя
+
+- **perf(week):** новый `WeekGrid` — один `useLiveQuery` на всю неделю вместо 7×3 запросов в `WeekDayColumn`. Использует индексный `between()` по `due_at`. Дочерние шаблоны вычисляются через `anyOf(parentIds)`, не полным сканом
+- **perf(tasks):** новый хук `useSubtasksMap` — один `where('parent_id').anyOf(ids)` для всех родителей вместо N подписок в `TaskItem`. Применён в `TodayList`, `WeekGrid`, `ProjectsList`, `ProjectTasksList`, `SphereTasksList`, `/done`, `/tasks`, `SearchClient`
+- **perf(today):** `where('due_at').belowOrEqual()` вместо `toArray()`+JS-filter
+- **perf(sync):** `Promise.all` для pull 4 таблиц вместо последовательного цикла
+- **perf(today/week/month):** `processOverdueTasks` в `Promise.all` со фетчами sphere/project — не блокирует TTFB
+- **perf(bundle):** `experimental.optimizePackageImports` для `lucide-react`, `date-fns`, `rrule`
+- **fix(sw):** cache.put для навигаций только для маршрутов из `SHELL_URLS` (раньше кешировались все авторизованные HTML — растущий кэш + риск показа чужого рендера). VERSION → v4
+- **chore:** выпил мёртвых server actions `toggleTask`, `deleteTask`, `createRecurringTask` из `spheres/actions.ts` (заменены `*Local` аналогами в `mutations.ts`)
+
+---
+
 ## 2026-05-26 — Единая дизайн-система
 
 - **feat(ui):** унификация всех внутренних экранов под фиолетовый brand (`PageShell`, `Section`, `Tile`, `ActionButton`, `Chip`, `EmptyState`)

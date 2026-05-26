@@ -2,6 +2,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import { TaskItem } from "@/components/TaskItem";
 
 export function ProjectTasksList({
@@ -31,6 +32,8 @@ export function ProjectTasksList({
   const done = data?.done ?? [];
   const sphere = data?.sphere ?? null;
 
+  const subtasksByParentId = useSubtasksMap([...todo, ...done].map((t) => t.id));
+
   return (
     <>
       <section className="space-y-1.5">
@@ -39,6 +42,7 @@ export function ProjectTasksList({
             key={t.id}
             task={t}
             sphere={sphere}
+            subtasks={subtasksByParentId.get(t.id)}
             showSphere={false}
             showProject={false}
           />
@@ -61,6 +65,7 @@ export function ProjectTasksList({
               key={t.id}
               task={t}
               sphere={sphere}
+              subtasks={subtasksByParentId.get(t.id)}
               showSphere={false}
               showProject={false}
             />

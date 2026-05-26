@@ -6,7 +6,7 @@
 //   - Supabase API: bypass (online-only; Dexie keeps local copy)
 //   - Push: forward to Notifications API
 
-const VERSION = "v3-offline-2026-05-22";
+const VERSION = "v4-shell-cache-narrow-2026-05-26";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
@@ -78,8 +78,13 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         try {
           const fresh = await fetch(req);
-          const cache = await caches.open(SHELL_CACHE);
-          cache.put(req, fresh.clone());
+          // Кешируем только белый список shell-маршрутов. Авторизованные
+          // HTML других страниц не складываем — иначе кэш растёт и может
+          // выдать чужой/устаревший рендер после смены сессии.
+          if (SHELL_URLS.includes(url.pathname)) {
+            const cache = await caches.open(SHELL_CACHE);
+            cache.put(req, fresh.clone());
+          }
           return fresh;
         } catch {
           const cache = await caches.open(SHELL_CACHE);

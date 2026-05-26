@@ -12,12 +12,11 @@ export default async function TodayPage() {
   await requireUser();
   const supabase = await createClient();
 
-  await processOverdueTasks(supabase);
-
   const now = new Date();
   const todayDefault = format(now, "yyyy-MM-dd");
 
-  const [{ data: spheresData }, { data: projectsData }] = await Promise.all([
+  const [, { data: spheresData }, { data: projectsData }] = await Promise.all([
+    processOverdueTasks(supabase),
     supabase
       .from("sphere")
       .select("id, name, color, icon")
