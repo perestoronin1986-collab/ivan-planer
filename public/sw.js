@@ -6,7 +6,7 @@
 //   - Supabase API: bypass (online-only; Dexie keeps local copy)
 //   - Push: forward to Notifications API
 
-const VERSION = "v4-shell-cache-narrow-2026-05-26";
+const VERSION = "v5-revert-narrow-cache-2026-05-26";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
@@ -78,12 +78,16 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         try {
           const fresh = await fetch(req);
-          // Кешируем только белый список shell-маршрутов. Авторизованные
-          // HTML других страниц не складываем — иначе кэш растёт и может
-          // выдать чужой/устаревший рендер после смены сессии.
-          if (SHELL_URLS.includes(url.pathname)) {
+          // Кешируем только успешные basic-ответы для shell-маршрутов.
+          // Redirect responses Cache API отвергает (TypeError), их пропускаем.
+          if (
+            SHELL_URLS.includes(url.pathname) &&
+            fresh.ok &&
+            fresh.type === "basic" &&
+            !fresh.redirected
+          ) {
             const cache = await caches.open(SHELL_CACHE);
-            cache.put(req, fresh.clone());
+            cache.put(req, fresh.clone()).catch(() => {});
           }
           return fresh;
         } catch {
