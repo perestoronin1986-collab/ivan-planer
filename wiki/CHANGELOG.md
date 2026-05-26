@@ -4,6 +4,47 @@
 
 ---
 
+## 2026-05-26 — Единая дизайн-система
+
+- **feat(ui):** унификация всех внутренних экранов под фиолетовый brand (`PageShell`, `Section`, `Tile`, `ActionButton`, `Chip`, `EmptyState`)
+- **feat(ui):** модалки (`AddTaskModal`, `AddRecurringTaskModal`), `sphere-edit`, `project-edit`, `ProjectsList` переведены на дизайн-систему
+- **docs:** `wiki/DESIGN.md` + `wiki/design-unified.html`
+
+---
+
+## 2026-05-25 — Год / Месяц / структура проектов
+
+- **feat(year):** страница `/year` — 3x4 сетка месяцев с количеством задач
+- **fix(year):** включать вхождения recurring задач в подсчёт по месяцам
+- **feat(home):** все 4 кнопки планирования одинакового размера, 2x2 grid
+- **feat(structure):** секция "Завершённые проекты"
+- **feat(projects):** переключатель показа done-задач в проекте + persist в localStorage
+- **feat(recurring):** фильтры по паттерну (неделя/месяц/год/интервал)
+- **feat(tasks,recurring):** кнопка `+` рядом с заголовком страницы для создания задачи
+
+---
+
+## 2026-05-23..24 — Главная мобильная + sync stability
+
+- **feat(home):** мобильный редизайн с фиолетовыми акцентными блоками
+- **fix(home):** email на отдельной строке, уменьшить padding
+- **fix(sw):** bump version для force re-install и re-precache shell URLs
+- **fix(middleware):** keep offline users authenticated on network error
+- **fix(today):** reschedule оставляет задачу overdue, не двигает `due_at`
+- **fix(today):** reschedule сдвигает на сегодня, не завтра
+- **feat(tasks):** checklist-подзадачи через `parent_id`
+- **feat(search):** `/search` страница с client-side fuzzy lookup
+- **feat(settings):** JSON backup + restore на `/settings`
+- **feat(sync):** offline-first для recurring задач + LWW guard + safe pull
+- **fix(sync):** dead-letter outbox + guard против poison entries
+- **feat(tasks):** разделение done-задач в `/done` страницу
+- **feat(recurring):** `/recurring` страница с next-due для каждой серии
+- **fix(inbox):** включить submit QuickCapture при непустом input
+- **fix(tasks):** binary checkbox toggle (todo ↔ done)
+- **fix(pwa):** manifest `start_url` = `/login` (200 unauthenticated)
+
+---
+
 ## 2026-05-21 — Offline / PWA (+ багфиксы смоук-теста)
 
 - **fix(middleware):** разрешить публичный доступ к `/manifest.webmanifest`, `/offline`, `/icon`, `/icon1`, `/icon2`, `/apple-icon` (расширен `PUBLIC_PATHS`). Иначе PWA не загрузила бы манифест и иконки на устройстве без активной сессии
