@@ -126,6 +126,24 @@ export default async function Home() {
           ))}
         </div>
         <Link
+          href="/inbox"
+          style={{
+            background: "#faf5ff",
+            border: "1px solid #e9d5ff",
+            borderRadius: "14px",
+            padding: "11px 10px",
+            textAlign: "center",
+            display: "block",
+            textDecoration: "none",
+            marginBottom: "6px",
+          }}
+        >
+          <div style={{ fontSize: "16px", marginBottom: "2px" }}>📥</div>
+          <div style={{ color: "#4c1d95", fontSize: "13px", fontWeight: 500 }}>
+            Инбокс <span style={{ color: "#a78bfa", fontWeight: 400 }}>— быстрые заметки</span>
+          </div>
+        </Link>
+        <Link
           href="/projects/done"
           style={{
             background: "#faf5ff",
