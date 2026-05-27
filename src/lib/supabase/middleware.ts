@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/icon1",
   "/icon2",
   "/apple-icon",
+  "/api/cron/",
 ];
 
 export async function updateSession(request: NextRequest) {
