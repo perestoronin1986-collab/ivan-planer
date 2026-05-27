@@ -1,0 +1,30 @@
+name: cron-push
+# External cron — Vercel Hobby plan limits crons to daily.
+# GitHub Actions runs schedule every 5 minutes (best-effort, may lag under
+# heavy GitHub load — acceptable for reminders).
+#
+# Required secrets (Settings -> Secrets -> Actions):
+#   CRON_URL    = https://ivan-planer.vercel.app/api/cron/push
+#   CRON_SECRET = same as Vercel env var
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Hit /api/cron/push
+        env:
+          CRON_URL: ${{ secrets.CRON_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing CRON_URL or CRON_SECRET secret"
+            exit 1
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$CRON_URL"
