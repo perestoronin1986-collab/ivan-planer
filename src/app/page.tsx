@@ -102,10 +102,12 @@ export default async function Home() {
         >
           🏗 Структура
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
           {[
             { href: "/spheres", emoji: "🌐", label: "Сферы" },
             { href: "/projects", emoji: "📁", label: "Проекты" },
+            { href: "/inbox", emoji: "📥", label: "Инбокс" },
+            { href: "/projects/done", emoji: "✅", label: "Выполненные" },
           ].map((item) => (
             <Link
               key={item.href}
@@ -114,51 +116,17 @@ export default async function Home() {
                 background: "#faf5ff",
                 border: "1px solid #e9d5ff",
                 borderRadius: "14px",
-                padding: "11px 10px",
+                padding: "13px 10px",
                 textAlign: "center",
                 display: "block",
                 textDecoration: "none",
               }}
             >
-              <div style={{ fontSize: "16px", marginBottom: "2px" }}>{item.emoji}</div>
-              <div style={{ color: "#4c1d95", fontSize: "13px", fontWeight: 500 }}>{item.label}</div>
+              <div style={{ fontSize: "18px", marginBottom: "2px" }}>{item.emoji}</div>
+              <div style={{ color: "#4c1d95", fontSize: "14px", fontWeight: 600 }}>{item.label}</div>
             </Link>
           ))}
         </div>
-        <Link
-          href="/inbox"
-          style={{
-            background: "#faf5ff",
-            border: "1px solid #e9d5ff",
-            borderRadius: "14px",
-            padding: "11px 10px",
-            textAlign: "center",
-            display: "block",
-            textDecoration: "none",
-            marginBottom: "6px",
-          }}
-        >
-          <div style={{ fontSize: "16px", marginBottom: "2px" }}>📥</div>
-          <div style={{ color: "#4c1d95", fontSize: "13px", fontWeight: 500 }}>
-            Инбокс <span style={{ color: "#a78bfa", fontWeight: 400 }}>— быстрые заметки</span>
-          </div>
-        </Link>
-        <Link
-          href="/projects/done"
-          style={{
-            background: "#faf5ff",
-            border: "1px solid #ede9fe",
-            borderRadius: "14px",
-            padding: "8px",
-            textAlign: "center",
-            display: "block",
-            width: "50%",
-            margin: "0 auto",
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ color: "#a78bfa", fontSize: "12px", fontWeight: 500 }}>✅ Выполненные проекты</span>
-        </Link>
       </section>
 
       {/* Block 3: Задачи */}
