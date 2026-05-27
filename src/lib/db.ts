@@ -45,6 +45,7 @@ export type TaskRow = {
   rrule: string | null;
   rrule_until: string | null;
   order: number;
+  priority: number;
   carry_count: number;
   completed_at: string | null;
   created_at: string;

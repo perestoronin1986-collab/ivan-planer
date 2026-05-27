@@ -30,6 +30,9 @@ export default function TasksPage() {
         if (a.status !== b.status) {
           return statusRank(a.status) - statusRank(b.status);
         }
+        const pa = a.priority ?? 4;
+        const pb = b.priority ?? 4;
+        if (pa !== pb) return pa - pb;
         if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
         if (a.due_at) return -1;
         if (b.due_at) return 1;

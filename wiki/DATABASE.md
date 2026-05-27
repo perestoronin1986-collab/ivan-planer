@@ -63,15 +63,16 @@
 | `rrule` | text? | строка RRule (только у шаблона) |
 | `rrule_until` | timestamptz? | конец rrule |
 | `order` | int | |
+| `priority` | int | 1..4 (1=urgent, 4=none, default 4) |
 | `carry_count` | int | кол-во переносов (overdue reschedule) |
 | `completed_at` | timestamptz? | когда выполнена |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | LWW marker |
 | `deleted_at` | timestamptz? | soft delete |
 
-Индексы: `task_user_idx`, `task_project_idx`, `task_sphere_idx`, `task_parent_idx`, `task_due_idx`, `task_updated_idx` на `(user_id, updated_at)`
+Индексы: `task_user_idx`, `task_project_idx`, `task_sphere_idx`, `task_parent_idx`, `task_due_idx`, `task_priority_idx` на `(user_id, priority, due_at)`, `task_updated_idx` на `(user_id, updated_at)`
 
-Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `project_id`, `parent_id` NOT NULL
+Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `project_id`, `parent_id` NOT NULL; `task_priority_chk` — `priority BETWEEN 1 AND 4`
 
 ---
 
@@ -127,6 +128,8 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 ## Триггеры
 
 `set_updated_at()` — `BEFORE UPDATE` на `sphere`, `project`, `task`, `inbox_item`. Перед каждым `UPDATE` пишет `NEW.updated_at = now()`. Нужен для LWW-синхронизации (см. ARCHITECTURE → Offline / PWA).
+
+`sync_task_notification()` — `AFTER INSERT OR UPDATE` на `task`. Зеркалит `task.remind_at` → строка `notification(fire_at)`. Удаляет уведомление при done/delete/clearing `remind_at`. См. ARCHITECTURE → Push-уведомления.
 
 ---
 

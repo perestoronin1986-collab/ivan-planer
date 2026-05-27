@@ -13,6 +13,9 @@ import {
   primaryBtnClass,
   ghostBtnClass,
 } from "@/components/ui/formStyles";
+import { PrioritySelector } from "@/components/ui/PrioritySelector";
+import { RemindAtPicker } from "@/components/ui/RemindAtPicker";
+import type { Priority } from "@/lib/priority";
 
 type Sphere = { id: string; name: string; icon: string | null };
 type Project = { id: string; name: string };
@@ -38,6 +41,9 @@ export function AddTaskModal({
   const [projectId, setProjectId] = useState("");
   const [dueAt, setDueAt] = useState(todayDefault);
   const [overdueAction, setOverdueAction] = useState<OverdueAction | "">("");
+  const [priority, setPriority] = useState<Priority>(4);
+  const [description, setDescription] = useState("");
+  const [remindAt, setRemindAt] = useState<string | null>(null);
   const [checklistEnabled, setChecklistEnabled] = useState(false);
   const [items, setItems] = useState<string[]>(["", ""]);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +54,9 @@ export function AddTaskModal({
     setProjectId("");
     setDueAt(todayDefault);
     setOverdueAction("");
+    setPriority(4);
+    setDescription("");
+    setRemindAt(null);
     setChecklistEnabled(false);
     setItems(["", ""]);
     setError(null);
@@ -64,6 +73,9 @@ export function AddTaskModal({
         sphereId,
         projectId: projectId || null,
         dueAt: dueAt || null,
+        remindAt: remindAt,
+        description: description.trim() || null,
+        priority,
         overdueAction: overdueAction || null,
       });
       if (checklistEnabled) {
@@ -170,6 +182,31 @@ export function AddTaskModal({
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
               className={inputClass}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className={labelClass}>Приоритет</label>
+            <PrioritySelector value={priority} onChange={setPriority} />
+          </div>
+
+          <div className="space-y-1">
+            <label className={labelClass}>Описание</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Заметки, ссылки (https://...)"
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className={labelClass}>Напоминание</label>
+            <RemindAtPicker
+              value={remindAt}
+              dueAt={dueAt ? new Date(dueAt + "T18:00").toISOString() : null}
+              onChange={setRemindAt}
             />
           </div>
 

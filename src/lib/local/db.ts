@@ -78,6 +78,17 @@ export class LocalDB extends Dexie {
     this.version(2).stores({
       outbox_dead: "++id, failed_at, table",
     });
+    // v3: add priority index on task; backfill default 4 on existing rows.
+    this.version(3)
+      .stores({
+        task:
+          "id, user_id, sphere_id, project_id, parent_id, status, due_at, priority, updated_at, deleted_at, order",
+      })
+      .upgrade(async (tx) => {
+        await tx.table("task").toCollection().modify((t: any) => {
+          if (t.priority == null) t.priority = 4;
+        });
+      });
   }
 }
 

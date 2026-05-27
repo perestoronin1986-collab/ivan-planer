@@ -4,9 +4,25 @@
 
 ---
 
-## 2026-05-27 — Плитка Инбокс на главной
+## 2026-05-27 — Приоритеты, описания, Push-уведомления
 
-- **feat(home):** в блок «Структура» добавлена плитка `📥 Инбокс — быстрые заметки` (полная ширина, между сеткой Сферы/Проекты и кнопкой Выполненные проекты). Ведёт на существующий `/inbox` — быстрый захват с конвертацией в задачу через `processInboxToTaskLocal`
+- **feat(task):** приоритеты P1-P4 (`task.priority` 1..4, default 4). Postgres CHECK + индекс `(user_id, priority, due_at)`. Dexie v3 (миграция бэкфилит существующие → 4). UI: чипы `PrioritySelector` в AddTaskModal + новой `TaskDetailsModal` (открывается по карандашу в `TaskItem`). Цветная левая полоска приоритета на карточке (красный/оранж/синий/серый). Сортировка в `/today` и `/tasks`: status → priority ASC → due_at.
+- **feat(task):** описание задачи в UI — textarea (3-4 строки) в формах. Рендер через `AutoLinkText` — URL `https://...` автоматически кликабельны. Превью первой строки под title в `TaskItem` + развёртывание по клику.
+- **feat(notifications):** Web Push pipeline.
+  - Postgres trigger `sync_task_notification` зеркалит `task.remind_at` → `notification(fire_at)`. Сброс при done/delete/clearing remind_at.
+  - `/api/push/subscribe` + `/api/push/unsubscribe` — POST: сохранение/удаление `push_subscription` для текущего пользователя.
+  - `/api/cron/push` — Vercel Cron `*/5 * * * *` (`vercel.json`). Читает pending notifications, шлёт `web-push.sendNotification()` всем подпискам пользователя, помечает `sent_at`, удаляет 410-Gone endpoints.
+  - SW (`public/sw.js` v6): `push` → `showNotification`, `notificationclick` → `/today`.
+  - Клиент: `src/lib/webPushClient.ts` — `subscribePush()` / `unsubscribePush()` / `getCurrentSubscription()` / `isPushSupported()`.
+  - UI: `NotificationsSection` в `/settings` — тоггл вкл/выкл, статус разрешения, хинт для iOS PWA.
+  - VAPID: `npm run vapid` → env `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_SUBJECT`.
+- **feat(task):** напоминание на конкретное время (`RemindAtPicker`) — пресеты «10 мин до due», «1 час до due», «1 день до due в 9:00», свободный `datetime-local`. Иконка 🔔 в `TaskItem` если задано.
+- **chore(scripts):** `migrate.ts` принимает аргумент — путь к sql-файлу миграции.
+- **DB:** миграция `drizzle/0004_priority_and_notification_trigger.sql` — `task.priority`, индекс, trigger `sync_task_notification`, RLS-policies на `notification` и `push_subscription`. **Применить вручную через Supabase SQL Editor** (drizzle-kit connection отвалился: `tenant/user postgres.zrxineexwmucsoyttwrx not found`).
+
+## 2026-05-27 — Плитка Инбокс на главной (ранее)
+
+- **feat(home):** в блок «Структура» добавлена плитка `📥 Инбокс — быстрые заметки` (полная ширина, между сеткой Сферы/Проекты и кнопкой Выполненные проекты). Ведёт на существующий `/inbox` — быстрый захват с конвертацией в задачу через `processInboxToTaskLocal`. Затем унифицировано как 2x2 grid (Сферы, Проекты, Инбокс, Выполненные).
 
 ---
 

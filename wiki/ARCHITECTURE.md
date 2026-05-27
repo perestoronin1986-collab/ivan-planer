@@ -33,7 +33,39 @@
 /inbox                     inbox — быстрые заметки → задачи
 /projects                  все проекты
 /auth/callback             OAuth callback Supabase
+/api/push/subscribe        POST — сохранить push_subscription
+/api/push/unsubscribe      POST — удалить push_subscription
+/api/cron/push             Vercel Cron */5min — отправка Web Push по notification.fire_at
 ```
+
+---
+
+## Push-уведомления (2026-05-27)
+
+Pipeline:
+
+```
+task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
+                                        │
+                                        ▼
+                               Vercel Cron каждые 5 мин
+                                        │
+                                        ▼
+                             /api/cron/push → web-push.sendNotification()
+                                        │
+                                        ▼
+                                  Service Worker (push event)
+                                        │
+                                        ▼
+                              showNotification → user
+```
+
+- **VAPID**: env `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` + клиентский `NEXT_PUBLIC_VAPID_PUBLIC_KEY`. Генерация: `npm run vapid`.
+- **CRON_SECRET**: проверяется в `/api/cron/push` через `Authorization: Bearer <secret>` или `?secret=`.
+- **SUPABASE_SERVICE_ROLE_KEY**: нужен для cron (читает все строки минуя RLS). Если не задан — fallback на anon (только публичные данные).
+- **Postgres trigger `sync_task_notification`** на `task` — при INSERT/UPDATE если `remind_at IS NOT NULL AND status != 'done' AND deleted_at IS NULL` создаёт/обновляет строку `notification`. При done/delete/clearing remind_at — удаляет.
+- **iOS**: push работает только если PWA добавлен на главный экран (iOS 16.4+).
+- **SW handler** в `public/sw.js`: `push` → `showNotification`, `notificationclick` → открыть `/today`.
 
 ---
 

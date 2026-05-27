@@ -24,6 +24,9 @@
 - Деплой на Vercel, автодеплой из `main`
 - **Offline / PWA** — Local-first: Dexie (IndexedDB) + outbox + sync engine (LWW по `updated_at`, soft delete `deleted_at`). Service Worker (precache, network-first navigations, cache-first static, /offline fallback). Manifest + иконки 192/512. tasks/inbox/sphere/project — мутации через local mutations API
 - **Единый дизайн внутренних экранов (2026-05-26)** — дизайн-токены в `globals.css` (фиолетовая brand-палитра, радиусы, тени), UI-компоненты `src/components/ui/` (PageShell, Section, Tile, ActionButton, Chip, EmptyState, formStyles). Переведены: today, week, month, year, projects, projects/done, spheres, spheres/[id], spheres/[id]/projects/[id], tasks, recurring, inbox, search, done, settings + модалки AddTaskModal/AddRecurringTaskModal + OverdueActionSelect + SphereSelectorForm + ProjectsList. Гайд — `wiki/DESIGN.md`. Превью — `wiki/design-unified.html`.
+- **Приоритеты P1-P4 (2026-05-27)** — `task.priority` 1..4 в БД (default 4) + Dexie v3. UI: `PrioritySelector` чипы в AddTaskModal/TaskDetailsModal, цветная левая полоска в `TaskItem` (красный/оранж/синий/серый). Сортировка в `/today` и `/tasks` — по priority ASC, потом due_at.
+- **Описание задачи + автоссылки (2026-05-27)** — поле `description` в форме (textarea), `AutoLinkText` рендерит URL как `<a target=_blank>`. Превью первой строки под title в списке + развёртывание по клику.
+- **Push-уведомления (2026-05-27)** — VAPID + Web Push API. `task.remind_at` → Postgres trigger `sync_task_notification` создаёт строку в `notification`. Vercel Cron `/api/cron/push` каждые 5 мин читает pending notifications и шлёт через `web-push`. SW обрабатывает `push` event. Подписка/отписка через `/api/push/subscribe`+`/unsubscribe`. UI: тоггл в `/settings`. `RemindAtPicker` в форме задачи — пресеты «10 мин / 1 час / 1 день в 9:00 / точно» + datetime-local.
 
 ---
 
@@ -34,9 +37,11 @@
 | Идея | Заметка |
 |------|---------|
 | **Drag-and-drop в `/week`** | Перетаскивать задачи между днями |
-| **Push-уведомления** | Web Push по `remind_at`, таблица `notification` уже есть |
 | **Метки / теги** | Кросс-сферная классификация задач |
 | **Перетаскивание задач между сферами** | Быстрая реорганизация |
+| **Цели / OKR** | Сфера → Цель → Проект → Задача |
+| **Оценка времени (estimated/actual minutes)** | Реализм планирования |
+| **GTD-контексты** | @home, @work, @errands — кросс-сферный фильтр |
 
 ### Ученик (пользователь)
 

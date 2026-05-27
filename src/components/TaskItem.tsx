@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckSquare, Square, Pencil, Check, X } from "lucide-react";
+import { CheckSquare, Square, Pencil, Check, X, Bell } from "lucide-react";
 import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 import {
   toggleTaskStatusLocal,
@@ -9,6 +9,9 @@ import {
   deleteTaskLocal,
 } from "@/lib/local/mutations";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { TaskDetailsModal } from "@/components/TaskDetailsModal";
+import { priorityMeta } from "@/lib/priority";
+import { AutoLinkText } from "@/lib/autolink";
 
 type SphereLite = Pick<SphereRow, "id" | "name" | "color" | "icon">;
 type ProjectLite = Pick<ProjectRow, "id" | "name">;
@@ -34,8 +37,12 @@ export function TaskItem({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const done = task.status === "done";
+  const pMeta = priorityMeta(task.priority);
+  const hasDesc = !!(task.description && task.description.trim());
   const overdue =
     task.due_at && !done ? new Date(task.due_at) < new Date() : false;
 
@@ -60,7 +67,10 @@ export function TaskItem({
   const hasChecklist = checklistItems.length > 0;
 
   return (
-    <div className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-950">
+    <div
+      className="relative overflow-hidden rounded-md border border-neutral-200 bg-white px-2 py-1.5 dark:border-neutral-800 dark:bg-neutral-950"
+      style={{ borderLeft: `4px solid ${pMeta.color}` }}
+    >
       <div className="flex items-stretch gap-2">
         <button
           type="button"
@@ -126,10 +136,7 @@ export function TaskItem({
                 )}
                 <button
                   type="button"
-                  onClick={() => {
-                    setDraft(task.title);
-                    setEditing(true);
-                  }}
+                  onClick={() => setDetailsOpen(true)}
                   className="flex-shrink-0 text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
                   aria-label="Редактировать"
                 >
@@ -161,6 +168,14 @@ export function TaskItem({
                 {new Date(task.due_at).toLocaleDateString("ru")}
               </span>
             )}
+            {task.remind_at && !done && (
+              <span
+                className="flex items-center gap-0.5 text-[var(--brand-600,#7c3aed)]"
+                title={`Напоминание: ${new Date(task.remind_at).toLocaleString("ru")}`}
+              >
+                <Bell size={11} />
+              </span>
+            )}
             {!sphere && !project && !task.due_at && (
               <span className="text-neutral-300 dark:text-neutral-700">—</span>
             )}
@@ -175,6 +190,27 @@ export function TaskItem({
           </div>
         </div>
       </div>
+
+      {hasDesc && (
+        <div className="mt-1 pl-10">
+          <button
+            type="button"
+            onClick={() => setDescExpanded((v) => !v)}
+            className="text-left text-xs text-neutral-500 hover:text-neutral-700"
+          >
+            {descExpanded ? (
+              <span className="block whitespace-pre-wrap">
+                <AutoLinkText text={task.description ?? ""} />
+              </span>
+            ) : (
+              <span className="line-clamp-1 italic">
+                {task.description!.replace(/\s+/g, " ").slice(0, 80)}
+                {task.description!.length > 80 ? "…" : ""}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
 
       {hasChecklist && (
         <div className="mt-2 space-y-1 border-t border-neutral-100 pt-2 pl-10 dark:border-neutral-800">
@@ -205,6 +241,12 @@ export function TaskItem({
           ))}
         </div>
       )}
+
+      <TaskDetailsModal
+        task={task}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
     </div>
   );
 }

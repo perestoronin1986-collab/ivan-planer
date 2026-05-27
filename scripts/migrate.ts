@@ -7,7 +7,8 @@ import postgres from "postgres";
 async function main() {
   const sql = postgres(process.env.DATABASE_URL!, { ssl: "require", max: 1 });
 
-  const migration = readFileSync("./drizzle/0000_init.sql", "utf-8");
+  const file = process.argv[2] || "./drizzle/0000_init.sql";
+  const migration = readFileSync(file, "utf-8");
   const statements = migration
     .split("--> statement-breakpoint")
     .map((s) => s.trim())

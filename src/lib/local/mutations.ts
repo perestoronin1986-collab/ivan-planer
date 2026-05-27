@@ -91,6 +91,7 @@ export async function processInboxToTaskLocal(args: {
     rrule: null,
     rrule_until: null,
     order: 0,
+    priority: 4,
     carry_count: 0,
     completed_at: null,
     created_at: now(),
@@ -130,6 +131,9 @@ export async function addTaskLocal(args: {
   projectId?: string | null;
   parentId?: string | null;
   dueAt?: string | null;
+  remindAt?: string | null;
+  description?: string | null;
+  priority?: number | null;
   overdueAction?: OverdueAction | null;
 }): Promise<TaskRow> {
   // Mirror server-side CHECK constraint `task_context_chk`.
@@ -147,13 +151,14 @@ export async function addTaskLocal(args: {
     project_id: args.projectId ?? null,
     parent_id: args.parentId ?? null,
     title: args.title,
-    description: null,
+    description: args.description ?? null,
     status: "todo",
     due_at: args.dueAt ?? null,
-    remind_at: null,
+    remind_at: args.remindAt ?? null,
     rrule: null,
     rrule_until: null,
     order: 0,
+    priority: args.priority ?? 4,
     carry_count: 0,
     completed_at: null,
     created_at: now(),
@@ -326,6 +331,7 @@ export async function createRecurringTaskLocal(
     rrule: rruleStr,
     rrule_until: rruleUntil,
     order: 0,
+    priority: 4,
     carry_count: 0,
     completed_at: null,
     created_at: nowIso,
@@ -350,6 +356,7 @@ export async function createRecurringTaskLocal(
     rrule: null,
     rrule_until: null,
     order: 0,
+    priority: 4,
     carry_count: 0,
     completed_at: null,
     created_at: nowIso,

@@ -35,8 +35,15 @@ export function TodayList() {
       if (ms < todayStartMs) overdue.push(t);
       else today.push(t);
     }
-    const cmp = (a: { due_at: string | null }, b: { due_at: string | null }) =>
-      (a.due_at ?? "").localeCompare(b.due_at ?? "");
+    const cmp = (
+      a: { due_at: string | null; priority?: number | null },
+      b: { due_at: string | null; priority?: number | null },
+    ) => {
+      const pa = a.priority ?? 4;
+      const pb = b.priority ?? 4;
+      if (pa !== pb) return pa - pb;
+      return (a.due_at ?? "").localeCompare(b.due_at ?? "");
+    };
     overdue.sort(cmp);
     today.sort(cmp);
 

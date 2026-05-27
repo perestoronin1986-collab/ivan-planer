@@ -92,6 +92,7 @@ export const task = pgTable(
     rrule: text("rrule"),
     rruleUntil: timestamp("rrule_until", { withTimezone: true }),
     order: integer("order").default(0).notNull(),
+    priority: integer("priority").default(4).notNull(),
     carryCount: integer("carry_count").default(0).notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -108,6 +109,7 @@ export const task = pgTable(
     index("task_sphere_idx").on(t.sphereId),
     index("task_parent_idx").on(t.parentId),
     index("task_due_idx").on(t.dueAt),
+    index("task_priority_idx").on(t.userId, t.priority, t.dueAt),
     index("task_updated_idx").on(t.userId, t.updatedAt),
     check(
       "task_context_chk",
