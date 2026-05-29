@@ -4,6 +4,10 @@
 
 ---
 
+## 2026-05-29 — Срочные: секции P2 и P3
+
+- **feat(urgent):** страница `/tasks/urgent` теперь показывает три секции вместо одной P1. Запрос разбит на `byPriority(1|2|3)` (та же сортировка `due_at` → `created_at`). Рендер: 🔥 P1 / 🟠 P2 / 🔵 P3, у каждой свой `EmptyState`. Подзаголовок: `N P1 · N P2 · N P3`. Цвета совпадают с `PRIORITY_OPTIONS` (`src/lib/priority.ts`).
+
 ## 2026-05-27 — Приоритеты, описания, Push-уведомления
 
 - **feat(task):** приоритеты P1-P4 (`task.priority` 1..4, default 4). Postgres CHECK + индекс `(user_id, priority, due_at)`. Dexie v3 (миграция бэкфилит существующие → 4). UI: чипы `PrioritySelector` в AddTaskModal + новой `TaskDetailsModal` (открывается по карандашу в `TaskItem`). Цветная левая полоска приоритета на карточке (красный/оранж/синий/серый). Сортировка в `/today` и `/tasks`: status → priority ASC → due_at.

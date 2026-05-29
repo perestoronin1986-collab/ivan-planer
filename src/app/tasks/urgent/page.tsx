@@ -22,21 +22,25 @@ export default function UrgentTasksPage() {
     const sphereById = new Map(spheres.map((s) => [s.id, s]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
     const templateIds = new Set(tasks.filter((t) => t.rrule).map((t) => t.id));
-    const live = tasks
-      .filter((t) => !t.deleted_at)
-      .filter((t) => !t.parent_id || templateIds.has(t.parent_id))
-      .filter((t) => (t.priority ?? 4) === 1)
-      .filter((t) => t.status !== "done")
-      .sort((a, b) => {
-        if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
-        if (a.due_at) return -1;
-        if (b.due_at) return 1;
-        return b.created_at.localeCompare(a.created_at);
-      });
-    return { live, sphereById, projectById };
+    const byPriority = (p: number) =>
+      tasks
+        .filter((t) => !t.deleted_at)
+        .filter((t) => !t.parent_id || templateIds.has(t.parent_id))
+        .filter((t) => (t.priority ?? 4) === p)
+        .filter((t) => t.status !== "done")
+        .sort((a, b) => {
+          if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
+          if (a.due_at) return -1;
+          if (b.due_at) return 1;
+          return b.created_at.localeCompare(a.created_at);
+        });
+    return { p1: byPriority(1), p2: byPriority(2), p3: byPriority(3), sphereById, projectById };
   });
 
-  const tasks = data?.live ?? [];
+  const p1 = data?.p1 ?? [];
+  const p2 = data?.p2 ?? [];
+  const p3 = data?.p3 ?? [];
+  const tasks = [...p1, ...p2, ...p3];
   const sphereById = data?.sphereById ?? new Map();
   const projectById = data?.projectById ?? new Map();
   const subtasksByParentId = useSubtasksMap(tasks.map((t) => t.id));
@@ -62,7 +66,7 @@ export default function UrgentTasksPage() {
     <PageShell
       title="Срочные"
       emoji="🔥"
-      subtitle={`${tasks.length} задач P1`}
+      subtitle={`${p1.length} P1 · ${p2.length} P2 · ${p3.length} P3`}
       actions={
         <AddTaskModal
           spheres={spheres}
@@ -74,11 +78,47 @@ export default function UrgentTasksPage() {
       }
     >
       <Section label="🔥 Приоритет P1">
-        {tasks.length === 0 ? (
-          <EmptyState emoji="✨" title="Нет срочных задач" />
+        {p1.length === 0 ? (
+          <EmptyState emoji="✨" title="Нет задач P1" />
         ) : (
           <div className="space-y-1.5">
-            {tasks.map((t) => (
+            {p1.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+                project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+                subtasks={subtasksByParentId.get(t.id)}
+              />
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section label="🟠 Приоритет P2">
+        {p2.length === 0 ? (
+          <EmptyState emoji="✨" title="Нет задач P2" />
+        ) : (
+          <div className="space-y-1.5">
+            {p2.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
+                project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+                subtasks={subtasksByParentId.get(t.id)}
+              />
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section label="🔵 Приоритет P3">
+        {p3.length === 0 ? (
+          <EmptyState emoji="✨" title="Нет задач P3" />
+        ) : (
+          <div className="space-y-1.5">
+            {p3.map((t) => (
               <TaskItem
                 key={t.id}
                 task={t}

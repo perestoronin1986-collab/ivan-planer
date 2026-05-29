@@ -45,3 +45,6 @@ next-env.d.ts
 # Local notes / planning (not part of project)
 wiki/.obsidian/
 docs/superpowers/
+
+.vercel
+.env*

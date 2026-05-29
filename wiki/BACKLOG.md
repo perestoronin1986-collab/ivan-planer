@@ -27,6 +27,7 @@
 - **Приоритеты P1-P4 (2026-05-27)** — `task.priority` 1..4 в БД (default 4) + Dexie v3. UI: `PrioritySelector` чипы в AddTaskModal/TaskDetailsModal, цветная левая полоска в `TaskItem` (красный/оранж/синий/серый). Сортировка в `/today` и `/tasks` — по priority ASC, потом due_at.
 - **Описание задачи + автоссылки (2026-05-27)** — поле `description` в форме (textarea), `AutoLinkText` рендерит URL как `<a target=_blank>`. Превью первой строки под title в списке + развёртывание по клику.
 - **Плашка «Срочные задачи» (2026-05-27)** — на главной в блоке «Задачи» 4-я плашка `/tasks/urgent`, фильтр `priority === 1`, размер как тайлы Структура/Планирование. Новая страница `src/app/tasks/urgent/page.tsx`.
+- **Срочные: секции P2 и P3 (2026-05-29)** — `/tasks/urgent` показывает три секции (P1/P2/P3) вместо одной. `byPriority(1|2|3)`, цвета из `PRIORITY_OPTIONS`. Подзаголовок `N P1 · N P2 · N P3`.
 - **Push-уведомления (2026-05-27)** — VAPID + Web Push API. `task.remind_at` → Postgres trigger `sync_task_notification` создаёт строку в `notification`. Vercel Cron `/api/cron/push` каждые 5 мин читает pending notifications и шлёт через `web-push`. SW обрабатывает `push` event. Подписка/отписка через `/api/push/subscribe`+`/unsubscribe`. UI: тоггл в `/settings`. `RemindAtPicker` в форме задачи — пресеты «10 мин / 1 час / 1 день в 9:00 / точно» + datetime-local.
 
 ---
