@@ -18,6 +18,11 @@ export const projectStatusEnum = pgEnum("project_status", [
   "done",
   "archived",
 ]);
+export const habitKindEnum = pgEnum("habit_kind", ["build", "quit"]);
+export const habitFrequencyEnum = pgEnum("habit_frequency", [
+  "daily",
+  "weekly",
+]);
 
 export const sphere = pgTable(
   "sphere",
@@ -184,6 +189,63 @@ export const notification = pgTable(
   ],
 );
 
+export const habit = pgTable(
+  "habit",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    color: text("color").default("#6366f1").notNull(),
+    kind: habitKindEnum("kind").default("build").notNull(),
+    frequency: habitFrequencyEnum("frequency").default("daily").notNull(),
+    targetPerWeek: integer("target_per_week").default(7).notNull(),
+    order: integer("order").default(0).notNull(),
+    archived: boolean("archived").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("habit_user_idx").on(t.userId),
+    index("habit_updated_idx").on(t.userId, t.updatedAt),
+    check(
+      "habit_target_chk",
+      sql`${t.targetPerWeek} BETWEEN 1 AND 7`,
+    ),
+  ],
+);
+
+export const habitLog = pgTable(
+  "habit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    habitId: uuid("habit_id")
+      .notNull()
+      .references(() => habit.id, { onDelete: "cascade" }),
+    // Local calendar day the habit was marked done, `yyyy-mm-dd`.
+    date: text("date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("habit_log_user_idx").on(t.userId),
+    index("habit_log_habit_idx").on(t.habitId),
+    index("habit_log_date_idx").on(t.userId, t.date),
+    index("habit_log_updated_idx").on(t.userId, t.updatedAt),
+  ],
+);
+
 export type Sphere = typeof sphere.$inferSelect;
 export type NewSphere = typeof sphere.$inferInsert;
 export type Project = typeof project.$inferSelect;
@@ -192,3 +254,7 @@ export type Task = typeof task.$inferSelect;
 export type NewTask = typeof task.$inferInsert;
 export type InboxItem = typeof inboxItem.$inferSelect;
 export type NewInboxItem = typeof inboxItem.$inferInsert;
+export type Habit = typeof habit.$inferSelect;
+export type NewHabit = typeof habit.$inferInsert;
+export type HabitLog = typeof habitLog.$inferSelect;
+export type NewHabitLog = typeof habitLog.$inferInsert;

@@ -31,6 +31,7 @@
 /spheres/[sphereId]/projects/[projectId]  задачи проекта
 /tasks                     все задачи (без фильтра по дате)
 /inbox                     inbox — быстрые заметки → задачи
+/habits                    привычки — вкладки Сегодня/Неделя/Статистика + создание
 /projects                  все проекты
 /auth/callback             OAuth callback Supabase
 /api/push/subscribe        POST — сохранить push_subscription
@@ -224,9 +225,9 @@ UI (useLiveQuery)  →  Dexie (IndexedDB)
 
 | Файл | Назначение |
 |------|-----------|
-| `src/lib/local/db.ts` | Dexie schema: 4 синхр. таблицы + `outbox` + `sync_meta` |
+| `src/lib/local/db.ts` | Dexie schema: 6 синхр. таблиц (sphere, project, task, inbox_item, habit, habit_log) + `outbox` + `outbox_dead` + `sync_meta`. Текущая версия v4 (v4 = habits) |
 | `src/lib/local/sync.ts` | `runSync()`, `pushOutbox()`, `pullTable()`, `installSyncListeners()` |
-| `src/lib/local/mutations.ts` | Local-first мутации: `addTaskLocal`, `updateTaskLocal`, `deleteTaskLocal`, `toggleTaskStatusLocal`, `addInboxItemLocal`, `addSphereLocal`, `addProjectLocal`, `processInboxToTaskLocal` |
+| `src/lib/local/mutations.ts` | Local-first мутации: `addTaskLocal`, `updateTaskLocal`, `deleteTaskLocal`, `toggleTaskStatusLocal`, `addInboxItemLocal`, `addSphereLocal`, `addProjectLocal`, `processInboxToTaskLocal`, `addHabitLocal`, `updateHabitLocal`, `deleteHabitLocal`, `toggleHabitLogLocal` |
 | `src/lib/local/useUser.ts` | Хук получения `userId` из Supabase auth |
 | `src/app/manifest.ts` | PWA manifest (`name`, `icons`, `display=standalone`) |
 | `public/sw.js` | Service Worker: precache app shell + network-first navigations + cache-first static + push + background sync |

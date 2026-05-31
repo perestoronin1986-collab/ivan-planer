@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-06-01 — Раздел «Привычки»
+
+- **feat(habits):** новый раздел `/habits` (local-first, как задачи). Четыре кнопки = 3 вкладки + создание:
+  - 🔥 **Сегодня** — список привычек, круглая кнопка-отметка ✓ на сегодня, серия 🔥, для еженедельных счётчик `X/target за неделю`.
+  - 📅 **Неделя** — сетка привычки × 7 дней (Пн–Вс), тап по клетке = отметка дня, навигация по неделям (будущие дни заблокированы).
+  - 📊 **Статистика** — на каждую привычку heatmap (13 недель, GitHub-style) + 🔥 текущая серия / 🏆 рекорд / % за 30 дней + кнопка удаления.
+  - ➕ **Новая** — модалка: название, иконка (12 emoji), цвет (7), тип (Полезная/Отказ), частота (Ежедневная/Еженедельная + цель N×/нед).
+- **DB:** две sync-таблицы. `habit` (id, user_id, name, icon, color, `kind` enum build/quit, `frequency` enum daily/weekly, `target_per_week` 1..7, order, archived + updated_at/deleted_at). `habit_log` (id, user_id, habit_id FK cascade, `date` text yyyy-mm-dd + sync). Отметка = строка habit_log; снять = удалить. История/серии считаются из логов на клиенте.
+- **sync:** Dexie v4 (stores `habit`, `habit_log` с индексом `[habit_id+date]`), `OutboxTable` + `TABLES` расширены. LWW RPC `upsert_habit_if_newer` / `upsert_habit_log_if_newer`. Триггеры `*_set_updated_at`, RLS owner-policies.
+- **logic:** `src/app/habits/stats.ts` — чистые функции `currentStreak` (daily=дни, weekly=недели достигшие target), `bestDailyStreak`, `completionRate`, `buildHeatmap`, `weekKey` (ISO-неделя Пн-старт).
+- **home:** плитка `🌱 Привычки` в блоке «Структура» (5 плиток: Сферы, Проекты, Привычки, Инбокс, Выполненные).
+- **SW** (`public/sw.js` v7): `/habits` добавлен в `SHELL_URLS`, bump `VERSION` → `v7-habits-2026-06-01`.
+- **DB:** миграция `drizzle/0005_habits.sql` — **применить вручную через Supabase SQL Editor** (как 0001–0004; drizzle journal содержит только 0000).
+
 ## 2026-05-29 — Срочные: секции P2 и P3
 
 - **feat(urgent):** страница `/tasks/urgent` теперь показывает три секции вместо одной P1. Запрос разбит на `byPriority(1|2|3)` (та же сортировка `due_at` → `created_at`). Рендер: 🔥 P1 / 🟠 P2 / 🔵 P3, у каждой свой `EmptyState`. Подзаголовок: `N P1 · N P2 · N P3`. Цвета совпадают с `PRIORITY_OPTIONS` (`src/lib/priority.ts`).

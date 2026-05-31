@@ -29,7 +29,14 @@ import {
  * NOTE: only runs in browser (uses Dexie + browser supabase client).
  */
 
-const TABLES: OutboxTable[] = ["sphere", "project", "task", "inbox_item"];
+const TABLES: OutboxTable[] = [
+  "sphere",
+  "project",
+  "task",
+  "inbox_item",
+  "habit",
+  "habit_log",
+];
 
 let _syncing = false;
 

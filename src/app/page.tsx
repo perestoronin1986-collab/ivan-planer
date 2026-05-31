@@ -106,6 +106,7 @@ export default async function Home() {
           {[
             { href: "/spheres", emoji: "🌐", label: "Сферы" },
             { href: "/projects", emoji: "📁", label: "Проекты" },
+            { href: "/habits", emoji: "🌱", label: "Привычки" },
             { href: "/inbox", emoji: "📥", label: "Инбокс" },
             { href: "/projects/done", emoji: "✅", label: "Выполненные" },
           ].map((item) => (

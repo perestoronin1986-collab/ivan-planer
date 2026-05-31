@@ -4,6 +4,10 @@ import { RRule } from "rrule";
 import { localDb } from "./db";
 import { enqueueMutation, runSync } from "./sync";
 import type {
+  HabitFrequency,
+  HabitKind,
+  HabitLogRow,
+  HabitRow,
   InboxItemRow,
   OverdueAction,
   ProjectRow,
@@ -442,4 +446,109 @@ export async function addProjectLocal(args: {
   await enqueueMutation("insert", "project", row.id, row);
   void runSync();
   return row;
+}
+
+// ---------------- Habits ----------------
+
+export async function addHabitLocal(args: {
+  userId: string;
+  name: string;
+  icon?: string | null;
+  color?: string;
+  kind?: HabitKind;
+  frequency?: HabitFrequency;
+  targetPerWeek?: number;
+}): Promise<HabitRow> {
+  const name = args.name.trim();
+  if (!name) throw new Error("Название не должно быть пустым");
+
+  const frequency = args.frequency ?? "daily";
+  // Daily habits target every day; weekly carries an explicit 1..7 target.
+  const targetPerWeek =
+    frequency === "daily"
+      ? 7
+      : Math.min(7, Math.max(1, args.targetPerWeek ?? 3));
+
+  const row: HabitRow = {
+    id: uuid(),
+    user_id: args.userId,
+    name,
+    icon: args.icon ?? null,
+    color: args.color ?? "#6366f1",
+    kind: args.kind ?? "build",
+    frequency,
+    target_per_week: targetPerWeek,
+    order: 0,
+    archived: false,
+    created_at: now(),
+    updated_at: now(),
+    deleted_at: null,
+  };
+  await localDb().habit.put(row);
+  await enqueueMutation("insert", "habit", row.id, row);
+  void runSync();
+  return row;
+}
+
+export async function updateHabitLocal(
+  id: string,
+  patch: Partial<HabitRow>,
+): Promise<void> {
+  const db = localDb();
+  const existing = await db.habit.get(id);
+  if (!existing) throw new Error(`Habit ${id} not found`);
+  const next = { ...existing, ...patch, updated_at: now() };
+  await db.habit.put(next);
+  await enqueueMutation("update", "habit", id, next);
+  void runSync();
+}
+
+export async function deleteHabitLocal(id: string): Promise<void> {
+  await localDb().habit.delete(id);
+  await enqueueMutation("delete", "habit", id, { id });
+  void runSync();
+}
+
+/**
+ * Toggle the completion mark for `habitId` on `date` (yyyy-mm-dd).
+ *
+ * Mark = a `habit_log` row exists for that (habit, date); unmark = delete it.
+ * Returns the new state (true = marked done). Uses the local `[habit_id+date]`
+ * index to find an existing non-deleted log, so repeated toggles never pile up
+ * duplicate rows for the same day.
+ */
+export async function toggleHabitLogLocal(args: {
+  userId: string;
+  habitId: string;
+  date: string;
+}): Promise<boolean> {
+  const { userId, habitId, date } = args;
+  const db = localDb();
+  const existing = await db.habit_log
+    .where("[habit_id+date]")
+    .equals([habitId, date])
+    .first();
+
+  if (existing) {
+    await db.habit_log.delete(existing.id);
+    await enqueueMutation("delete", "habit_log", existing.id, {
+      id: existing.id,
+    });
+    void runSync();
+    return false;
+  }
+
+  const row: HabitLogRow = {
+    id: uuid(),
+    user_id: userId,
+    habit_id: habitId,
+    date,
+    created_at: now(),
+    updated_at: now(),
+    deleted_at: null,
+  };
+  await db.habit_log.put(row);
+  await enqueueMutation("insert", "habit_log", row.id, row);
+  void runSync();
+  return true;
 }

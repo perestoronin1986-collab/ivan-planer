@@ -62,3 +62,28 @@ export type InboxItemRow = {
   converted_project_id: string | null;
   created_at: string;
 } & SyncMeta;
+
+export type HabitKind = "build" | "quit";
+export type HabitFrequency = "daily" | "weekly";
+
+export type HabitRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  icon: string | null;
+  color: string;
+  kind: HabitKind;
+  frequency: HabitFrequency;
+  target_per_week: number;
+  order: number;
+  archived: boolean;
+  created_at: string;
+} & SyncMeta;
+
+export type HabitLogRow = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  date: string; // yyyy-mm-dd, local calendar day
+  created_at: string;
+} & SyncMeta;

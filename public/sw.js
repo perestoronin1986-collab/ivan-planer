@@ -6,7 +6,7 @@
 //   - Supabase API: bypass (online-only; Dexie keeps local copy)
 //   - Push: forward to Notifications API
 
-const VERSION = "v6-push-priority-2026-05-27";
+const VERSION = "v7-habits-2026-06-01";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
@@ -16,6 +16,7 @@ const SHELL_URLS = [
   "/tasks",
   "/inbox",
   "/spheres",
+  "/habits",
   "/week",
   "/today",
   "/month",

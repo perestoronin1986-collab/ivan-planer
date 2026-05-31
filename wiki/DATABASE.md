@@ -95,6 +95,46 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 
 ---
 
+### `habit` — Привычки
+
+| Колонка | Тип | Описание |
+|---------|-----|---------|
+| `id` | uuid PK | |
+| `user_id` | uuid | владелец |
+| `name` | text | название |
+| `icon` | text? | emoji |
+| `color` | text | hex-цвет, default `#6366f1` |
+| `kind` | enum | `build` (формировать) / `quit` (отказ), default `build` |
+| `frequency` | enum | `daily` / `weekly`, default `daily` |
+| `target_per_week` | int | цель раз/нед (daily=7), default 7 |
+| `order` | int | |
+| `archived` | bool | |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker |
+| `deleted_at` | timestamptz? | soft delete |
+
+Индексы: `habit_user_idx`, `habit_updated_idx` на `(user_id, updated_at)`. Constraint `habit_target_chk` — `target_per_week BETWEEN 1 AND 7`.
+
+---
+
+### `habit_log` — Отметки выполнения привычки
+
+| Колонка | Тип | Описание |
+|---------|-----|---------|
+| `id` | uuid PK | |
+| `user_id` | uuid | |
+| `habit_id` | uuid FK→habit | cascade delete |
+| `date` | text | день отметки, `yyyy-mm-dd` (локальный) |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | LWW marker |
+| `deleted_at` | timestamptz? | soft delete |
+
+Индексы: `habit_log_user_idx`, `habit_log_habit_idx`, `habit_log_date_idx` на `(user_id, date)`, `habit_log_updated_idx` на `(user_id, updated_at)`.
+
+Отметка дня = строка `habit_log` для `(habit_id, date)`; снятие = удаление строки (soft delete на сервере). Серии/heatmap/проценты считаются на клиенте (`src/app/habits/stats.ts`). Уникального ограничения на `(habit_id, date)` нет — Dexie-индекс `[habit_id+date]` гарантирует один лог на день при тоггле.
+
+---
+
 ### `push_subscription` — Push-подписки
 
 | Колонка | Тип | Описание |
@@ -127,7 +167,7 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 
 ## Триггеры
 
-`set_updated_at()` — `BEFORE UPDATE` на `sphere`, `project`, `task`, `inbox_item`. Перед каждым `UPDATE` пишет `NEW.updated_at = now()`. Нужен для LWW-синхронизации (см. ARCHITECTURE → Offline / PWA).
+`set_updated_at()` — `BEFORE UPDATE` на `sphere`, `project`, `task`, `inbox_item`, `habit`, `habit_log`. Перед каждым `UPDATE` пишет `NEW.updated_at = now()`. Нужен для LWW-синхронизации (см. ARCHITECTURE → Offline / PWA).
 
 `sync_task_notification()` — `AFTER INSERT OR UPDATE` на `task`. Зеркалит `task.remind_at` → строка `notification(fire_at)`. Удаляет уведомление при done/delete/clearing `remind_at`. См. ARCHITECTURE → Push-уведомления.
 

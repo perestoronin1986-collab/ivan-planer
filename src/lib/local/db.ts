@@ -2,6 +2,8 @@
 
 import Dexie, { type Table } from "dexie";
 import type {
+  HabitLogRow,
+  HabitRow,
   InboxItemRow,
   ProjectRow,
   SphereRow,
@@ -18,7 +20,13 @@ import type {
  * - last_error: serialized last failure
  */
 export type OutboxOp = "insert" | "update" | "delete";
-export type OutboxTable = "sphere" | "project" | "task" | "inbox_item";
+export type OutboxTable =
+  | "sphere"
+  | "project"
+  | "task"
+  | "inbox_item"
+  | "habit"
+  | "habit_log";
 
 export type OutboxEntry = {
   id?: number;
@@ -58,6 +66,8 @@ export class LocalDB extends Dexie {
   project!: Table<ProjectRow, string>;
   task!: Table<TaskRow, string>;
   inbox_item!: Table<InboxItemRow, string>;
+  habit!: Table<HabitRow, string>;
+  habit_log!: Table<HabitLogRow, string>;
   outbox!: Table<OutboxEntry, number>;
   outbox_dead!: Table<OutboxDeadEntry, number>;
   sync_meta!: Table<SyncMetaKv, string>;
@@ -85,10 +95,16 @@ export class LocalDB extends Dexie {
           "id, user_id, sphere_id, project_id, parent_id, status, due_at, priority, updated_at, deleted_at, order",
       })
       .upgrade(async (tx) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await tx.table("task").toCollection().modify((t: any) => {
           if (t.priority == null) t.priority = 4;
         });
       });
+    // v4: habits — definitions + per-day completion logs.
+    this.version(4).stores({
+      habit: "id, user_id, updated_at, deleted_at, order, archived",
+      habit_log: "id, user_id, habit_id, date, [habit_id+date], updated_at, deleted_at",
+    });
   }
 }
 
