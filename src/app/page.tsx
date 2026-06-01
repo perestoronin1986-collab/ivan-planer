@@ -24,6 +24,25 @@ export default async function Home() {
         </form>
       </header>
 
+      {/* Block 0: Привычки — full-width */}
+      <Link
+        href="/habits"
+        style={{
+          background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
+          border: "1.5px solid #34d399",
+          borderRadius: "20px",
+          padding: "14px 18px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          boxShadow: "0 4px 20px rgba(16,185,129,0.18)",
+          textDecoration: "none",
+        }}
+      >
+        <div style={{ fontSize: "26px" }}>🌱</div>
+        <div style={{ color: "#065f46", fontSize: "16px", fontWeight: 700 }}>Привычки</div>
+      </Link>
+
       {/* Block 1: Планирование — highlighted */}
       <section
         style={{
@@ -106,7 +125,6 @@ export default async function Home() {
           {[
             { href: "/spheres", emoji: "🌐", label: "Сферы" },
             { href: "/projects", emoji: "📁", label: "Проекты" },
-            { href: "/habits", emoji: "🌱", label: "Привычки" },
             { href: "/inbox", emoji: "📥", label: "Инбокс" },
             { href: "/projects/done", emoji: "✅", label: "Выполненные" },
           ].map((item) => (
