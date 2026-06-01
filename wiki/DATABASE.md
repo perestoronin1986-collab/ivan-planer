@@ -106,6 +106,8 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `color` | text | hex-цвет, default `#6366f1` |
 | `kind` | enum | `build` (формировать) / `quit` (отказ), default `build` |
 | `frequency` | enum | `daily` / `weekly`, default `daily` |
+| `type` | enum | `binary` (галочка) / `numeric` (число), default `binary` |
+| `unit` | text? | единица для numeric (кг, мл…); null для binary |
 | `target_per_week` | int | цель раз/нед (daily=7), default 7 |
 | `order` | int | |
 | `archived` | bool | |
@@ -125,13 +127,16 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `user_id` | uuid | |
 | `habit_id` | uuid FK→habit | cascade delete |
 | `date` | text | день отметки, `yyyy-mm-dd` (локальный) |
+| `value` | real? | значение для numeric-привычки; null для binary |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | LWW marker |
 | `deleted_at` | timestamptz? | soft delete |
 
 Индексы: `habit_log_user_idx`, `habit_log_habit_idx`, `habit_log_date_idx` на `(user_id, date)`, `habit_log_updated_idx` на `(user_id, updated_at)`.
 
-Отметка дня = строка `habit_log` для `(habit_id, date)`; снятие = удаление строки (soft delete на сервере). Серии/heatmap/проценты считаются на клиенте (`src/app/habits/stats.ts`). Уникального ограничения на `(habit_id, date)` нет — Dexie-индекс `[habit_id+date]` гарантирует один лог на день при тоггле.
+Отметка дня = строка `habit_log` для `(habit_id, date)`; снятие = удаление строки (soft delete на сервере). Для numeric-привычек строка несёт `value` (одно значение на день); очистка значения удаляет строку. Серии/heatmap/проценты (binary) и последнее/мин/макс/среднее + sparkline (numeric) считаются на клиенте (`src/app/habits/stats.ts`). Уникального ограничения на `(habit_id, date)` нет — Dexie-индекс `[habit_id+date]` гарантирует один лог на день при тоггле/вводе.
+
+> ⚠️ LWW-RPC `upsert_habit_if_newer` / `upsert_habit_log_if_newer` содержат явные списки колонок в `ON CONFLICT DO UPDATE SET`. При добавлении колонки в `habit`/`habit_log` обязательно дополнять эти списки (миграция `0006_numeric_habits` добавила `type`, `unit`, `value`), иначе серверные обновления молча теряют новые поля.
 
 ---
 
