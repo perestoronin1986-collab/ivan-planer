@@ -65,6 +65,7 @@ export type InboxItemRow = {
 
 export type HabitKind = "build" | "quit";
 export type HabitFrequency = "daily" | "weekly";
+export type HabitType = "binary" | "numeric";
 
 export type HabitRow = {
   id: string;
@@ -74,6 +75,8 @@ export type HabitRow = {
   color: string;
   kind: HabitKind;
   frequency: HabitFrequency;
+  type: HabitType;
+  unit: string | null;
   target_per_week: number;
   order: number;
   archived: boolean;
@@ -85,5 +88,6 @@ export type HabitLogRow = {
   user_id: string;
   habit_id: string;
   date: string; // yyyy-mm-dd, local calendar day
+  value: number | null; // numeric habits: recorded value; null for binary
   created_at: string;
 } & SyncMeta;

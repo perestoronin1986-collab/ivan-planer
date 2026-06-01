@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   integer,
+  real,
   boolean,
   pgEnum,
   index,
@@ -23,6 +24,7 @@ export const habitFrequencyEnum = pgEnum("habit_frequency", [
   "daily",
   "weekly",
 ]);
+export const habitTypeEnum = pgEnum("habit_type", ["binary", "numeric"]);
 
 export const sphere = pgTable(
   "sphere",
@@ -199,6 +201,8 @@ export const habit = pgTable(
     color: text("color").default("#6366f1").notNull(),
     kind: habitKindEnum("kind").default("build").notNull(),
     frequency: habitFrequencyEnum("frequency").default("daily").notNull(),
+    type: habitTypeEnum("type").default("binary").notNull(),
+    unit: text("unit"),
     targetPerWeek: integer("target_per_week").default(7).notNull(),
     order: integer("order").default(0).notNull(),
     archived: boolean("archived").default(false).notNull(),
@@ -230,6 +234,8 @@ export const habitLog = pgTable(
       .references(() => habit.id, { onDelete: "cascade" }),
     // Local calendar day the habit was marked done, `yyyy-mm-dd`.
     date: text("date").notNull(),
+    // Numeric value recorded for that day (numeric habits). Null for binary.
+    value: real("value"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

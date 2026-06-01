@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useUserId } from "@/lib/local/useUser";
 import { addHabitLocal } from "@/lib/local/mutations";
-import type { HabitFrequency, HabitKind } from "@/lib/db";
+import type { HabitFrequency, HabitKind, HabitType } from "@/lib/db";
 import {
   dialogClass,
   inputClass,
@@ -31,6 +31,8 @@ export function NewHabitModal({
   const [kind, setKind] = useState<HabitKind>("build");
   const [frequency, setFrequency] = useState<HabitFrequency>("daily");
   const [targetPerWeek, setTargetPerWeek] = useState(3);
+  const [type, setType] = useState<HabitType>("binary");
+  const [unit, setUnit] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
@@ -40,6 +42,8 @@ export function NewHabitModal({
     setKind("build");
     setFrequency("daily");
     setTargetPerWeek(3);
+    setType("binary");
+    setUnit("");
     setError(null);
   }
 
@@ -56,6 +60,8 @@ export function NewHabitModal({
         kind,
         frequency,
         targetPerWeek,
+        type,
+        unit,
       });
       reset();
       dialogRef.current?.close();
@@ -163,6 +169,36 @@ export function NewHabitModal({
               />
             </div>
           </div>
+
+          <div className="space-y-1">
+            <label className={labelClass}>Тип отметки</label>
+            <div className="grid grid-cols-2 gap-2">
+              <TypeBtn
+                active={type === "binary"}
+                onClick={() => setType("binary")}
+                label="Галочка"
+                hint="выполнено / нет"
+              />
+              <TypeBtn
+                active={type === "numeric"}
+                onClick={() => setType("numeric")}
+                label="Числовая"
+                hint="записывать число"
+              />
+            </div>
+          </div>
+
+          {type === "numeric" && (
+            <div className="space-y-1">
+              <label className={labelClass}>Единица (необязательно)</label>
+              <input
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="кг, мл, км, шаги…"
+                className={inputClass}
+              />
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className={labelClass}>Частота</label>

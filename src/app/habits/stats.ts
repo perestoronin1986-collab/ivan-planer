@@ -151,3 +151,50 @@ export function buildHeatmap(
   }
   return cols;
 }
+
+// ---------------- Numeric habits ----------------
+
+/**
+ * Trailing-window series for a numeric habit, oldest→newest, only days that
+ * have a recorded value. Used to draw a sparkline.
+ */
+export function numericSeries(
+  valueByDate: Map<string, number>,
+  windowDays = 30,
+  today: string = dayStr(),
+): Array<{ date: string; value: number }> {
+  const out: Array<{ date: string; value: number }> = [];
+  for (let i = windowDays - 1; i >= 0; i--) {
+    const date = addDays(today, -i);
+    const v = valueByDate.get(date);
+    if (v != null) out.push({ date, value: v });
+  }
+  return out;
+}
+
+/**
+ * Aggregate stats over all recorded values for a numeric habit.
+ * `last` is the value on the most recent dated entry.
+ */
+export function numericStats(valueByDate: Map<string, number>): {
+  last: number | null;
+  min: number | null;
+  max: number | null;
+  avg: number | null;
+  count: number;
+} {
+  const entries = [...valueByDate.entries()];
+  if (entries.length === 0) {
+    return { last: null, min: null, max: null, avg: null, count: 0 };
+  }
+  entries.sort((a, b) => a[0].localeCompare(b[0]));
+  const values = entries.map((e) => e[1]);
+  const sum = values.reduce((s, v) => s + v, 0);
+  return {
+    last: entries[entries.length - 1][1],
+    min: Math.min(...values),
+    max: Math.max(...values),
+    avg: sum / values.length,
+    count: values.length,
+  };
+}

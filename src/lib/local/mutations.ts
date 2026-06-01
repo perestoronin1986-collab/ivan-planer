@@ -8,6 +8,7 @@ import type {
   HabitKind,
   HabitLogRow,
   HabitRow,
+  HabitType,
   InboxItemRow,
   OverdueAction,
   ProjectRow,
@@ -457,6 +458,8 @@ export async function addHabitLocal(args: {
   color?: string;
   kind?: HabitKind;
   frequency?: HabitFrequency;
+  type?: HabitType;
+  unit?: string | null;
   targetPerWeek?: number;
 }): Promise<HabitRow> {
   const name = args.name.trim();
@@ -469,6 +472,11 @@ export async function addHabitLocal(args: {
       ? 7
       : Math.min(7, Math.max(1, args.targetPerWeek ?? 3));
 
+  const type: HabitType = args.type ?? "binary";
+  // Unit only applies to numeric habits; trimmed, empty -> null.
+  const unit =
+    type === "numeric" ? (args.unit?.trim() || null) : null;
+
   const row: HabitRow = {
     id: uuid(),
     user_id: args.userId,
@@ -477,6 +485,8 @@ export async function addHabitLocal(args: {
     color: args.color ?? "#6366f1",
     kind: args.kind ?? "build",
     frequency,
+    type,
+    unit,
     target_per_week: targetPerWeek,
     order: 0,
     archived: false,
@@ -543,6 +553,7 @@ export async function toggleHabitLogLocal(args: {
     user_id: userId,
     habit_id: habitId,
     date,
+    value: null,
     created_at: now(),
     updated_at: now(),
     deleted_at: null,
@@ -551,4 +562,62 @@ export async function toggleHabitLogLocal(args: {
   await enqueueMutation("insert", "habit_log", row.id, row);
   void runSync();
   return true;
+}
+
+/**
+ * Set the numeric `value` for `habitId` on `date` (yyyy-mm-dd).
+ *
+ * `value == null` or NaN removes the day's log (like unmarking). Otherwise
+ * upserts a single log row for that (habit, date), reusing the
+ * `[habit_id+date]` index so repeated edits never pile up duplicates.
+ * Returns the stored value, or null when removed.
+ */
+export async function setHabitValueLocal(args: {
+  userId: string;
+  habitId: string;
+  date: string;
+  value: number | null;
+}): Promise<number | null> {
+  const { userId, habitId, date } = args;
+  const value =
+    args.value == null || Number.isNaN(args.value) ? null : args.value;
+  const db = localDb();
+  const existing = await db.habit_log
+    .where("[habit_id+date]")
+    .equals([habitId, date])
+    .first();
+
+  if (value == null) {
+    if (existing) {
+      await db.habit_log.delete(existing.id);
+      await enqueueMutation("delete", "habit_log", existing.id, {
+        id: existing.id,
+      });
+      void runSync();
+    }
+    return null;
+  }
+
+  if (existing) {
+    const next = { ...existing, value, updated_at: now() };
+    await db.habit_log.put(next);
+    await enqueueMutation("update", "habit_log", next.id, next);
+    void runSync();
+    return value;
+  }
+
+  const row: HabitLogRow = {
+    id: uuid(),
+    user_id: userId,
+    habit_id: habitId,
+    date,
+    value,
+    created_at: now(),
+    updated_at: now(),
+    deleted_at: null,
+  };
+  await db.habit_log.put(row);
+  await enqueueMutation("insert", "habit_log", row.id, row);
+  void runSync();
+  return value;
 }

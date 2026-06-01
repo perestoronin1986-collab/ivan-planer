@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check } from "lucide-react";
 import { localDb } from "@/lib/local/db";
 import { useUserId } from "@/lib/local/useUser";
-import { toggleHabitLogLocal, deleteHabitLocal } from "@/lib/local/mutations";
+import {
+  toggleHabitLogLocal,
+  setHabitValueLocal,
+  deleteHabitLocal,
+} from "@/lib/local/mutations";
 import type { HabitRow } from "@/lib/db";
 import { Section, EmptyState, Chip } from "@/components/ui";
 import { NewHabitModal } from "./NewHabitModal";
@@ -17,6 +21,8 @@ import {
   bestDailyStreak,
   completionRate,
   buildHeatmap,
+  numericStats,
+  numericSeries,
 } from "./stats";
 
 type Tab = "today" | "week" | "stats";
@@ -32,6 +38,7 @@ function mondayOf(date: string): string {
 type HabitData = {
   habits: HabitRow[];
   doneByHabit: Map<string, Set<string>>;
+  valueByHabit: Map<string, Map<string, number>>;
 };
 
 function useHabitData(): HabitData | undefined {
@@ -46,12 +53,17 @@ function useHabitData(): HabitData | undefined {
       .sort((a, b) => a.order - b.order || a.created_at.localeCompare(b.created_at));
 
     const doneByHabit = new Map<string, Set<string>>();
-    for (const h of visible) doneByHabit.set(h.id, new Set());
+    const valueByHabit = new Map<string, Map<string, number>>();
+    for (const h of visible) {
+      doneByHabit.set(h.id, new Set());
+      valueByHabit.set(h.id, new Map());
+    }
     for (const l of logs) {
       if (l.deleted_at) continue;
       doneByHabit.get(l.habit_id)?.add(l.date);
+      if (l.value != null) valueByHabit.get(l.habit_id)?.set(l.date, l.value);
     }
-    return { habits: visible, doneByHabit };
+    return { habits: visible, doneByHabit, valueByHabit };
   });
 }
 
@@ -61,6 +73,8 @@ export function HabitsClient() {
 
   const habits = data?.habits ?? [];
   const doneByHabit = data?.doneByHabit ?? new Map<string, Set<string>>();
+  const valueByHabit =
+    data?.valueByHabit ?? new Map<string, Map<string, number>>();
   const empty = habits.length === 0;
 
   return (
@@ -92,13 +106,25 @@ export function HabitsClient() {
       )}
 
       {!empty && tab === "today" && (
-        <TodayTab habits={habits} doneByHabit={doneByHabit} />
+        <TodayTab
+          habits={habits}
+          doneByHabit={doneByHabit}
+          valueByHabit={valueByHabit}
+        />
       )}
       {!empty && tab === "week" && (
-        <WeekTab habits={habits} doneByHabit={doneByHabit} />
+        <WeekTab
+          habits={habits}
+          doneByHabit={doneByHabit}
+          valueByHabit={valueByHabit}
+        />
       )}
       {!empty && tab === "stats" && (
-        <StatsTab habits={habits} doneByHabit={doneByHabit} />
+        <StatsTab
+          habits={habits}
+          doneByHabit={doneByHabit}
+          valueByHabit={valueByHabit}
+        />
       )}
     </div>
   );
@@ -142,7 +168,7 @@ function freqLabel(h: HabitRow): string {
 
 // ---------------- Сегодня ----------------
 
-function TodayTab({ habits, doneByHabit }: HabitData) {
+function TodayTab({ habits, doneByHabit, valueByHabit }: HabitData) {
   const userId = useUserId();
   const today = dayStr();
   const thisWeek = weekKey(today);
@@ -163,6 +189,7 @@ function TodayTab({ habits, doneByHabit }: HabitData) {
             h.frequency === "weekly"
               ? [...done].filter((d) => weekKey(d) === thisWeek).length
               : 0;
+          const todayValue = valueByHabit.get(h.id)?.get(today) ?? null;
           return (
             <div
               key={h.id}
@@ -183,17 +210,34 @@ function TodayTab({ habits, doneByHabit }: HabitData) {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => toggle(h.id)}
-                aria-label={isDone ? "Снять отметку" : "Отметить выполнено"}
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition"
-                style={{
-                  background: isDone ? h.color : "#fff",
-                  border: isDone ? "none" : "2px solid var(--brand-200)",
-                }}
-              >
-                {isDone && <Check size={18} color="#fff" strokeWidth={3} />}
-              </button>
+              {h.type === "numeric" ? (
+                <NumericTodayInput
+                  key={`${h.id}:${today}`}
+                  habit={h}
+                  value={todayValue}
+                  onCommit={(v) => {
+                    if (userId)
+                      void setHabitValueLocal({
+                        userId,
+                        habitId: h.id,
+                        date: today,
+                        value: v,
+                      });
+                  }}
+                />
+              ) : (
+                <button
+                  onClick={() => toggle(h.id)}
+                  aria-label={isDone ? "Снять отметку" : "Отметить выполнено"}
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition"
+                  style={{
+                    background: isDone ? h.color : "#fff",
+                    border: isDone ? "none" : "2px solid var(--brand-200)",
+                  }}
+                >
+                  {isDone && <Check size={18} color="#fff" strokeWidth={3} />}
+                </button>
+              )}
             </div>
           );
         })}
@@ -202,9 +246,74 @@ function TodayTab({ habits, doneByHabit }: HabitData) {
   );
 }
 
+/**
+ * Numeric value input for the Today tab. Holds local draft state and commits
+ * on a 500ms debounce (and on blur). Empty string commits `null` (removes the
+ * day's log). A small color dot indicates a value is recorded.
+ */
+function NumericTodayInput({
+  habit,
+  value,
+  onCommit,
+}: {
+  habit: HabitRow;
+  value: number | null;
+  onCommit: (v: number | null) => void;
+}) {
+  const [draft, setDraft] = useState(value == null ? "" : String(value));
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function parse(s: string): number | null {
+    const t = s.trim().replace(",", ".");
+    if (t === "") return null;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function schedule(s: string) {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => onCommit(parse(s)), 500);
+  }
+
+  function flush(s: string) {
+    if (timer.current) clearTimeout(timer.current);
+    onCommit(parse(s));
+  }
+
+  const hasValue = draft.trim() !== "";
+
+  return (
+    <div className="flex flex-shrink-0 items-center gap-1.5">
+      <input
+        value={draft}
+        inputMode="decimal"
+        placeholder="—"
+        aria-label={`Значение: ${habit.name}`}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          schedule(e.target.value);
+        }}
+        onBlur={() => flush(draft)}
+        className="h-9 w-16 rounded-[10px] border bg-white px-2 text-right text-sm font-semibold text-ink outline-none"
+        style={{ borderColor: "var(--brand-200)" }}
+      />
+      {habit.unit && (
+        <span className="text-[11px] text-muted">{habit.unit}</span>
+      )}
+      <span
+        className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+        style={{
+          background: hasValue ? habit.color : "transparent",
+          border: hasValue ? "none" : "2px solid var(--brand-200)",
+        }}
+      />
+    </div>
+  );
+}
+
 // ---------------- Неделя ----------------
 
-function WeekTab({ habits, doneByHabit }: HabitData) {
+function WeekTab({ habits, doneByHabit, valueByHabit }: HabitData) {
   const userId = useUserId();
   const [weekOffset, setWeekOffset] = useState(0);
   const today = dayStr();
@@ -214,6 +323,25 @@ function WeekTab({ habits, doneByHabit }: HabitData) {
   async function toggle(habitId: string, date: string) {
     if (!userId || date > today) return; // нельзя отмечать будущее
     await toggleHabitLogLocal({ userId, habitId, date });
+  }
+
+  function editValue(h: HabitRow, date: string) {
+    if (!userId || date > today) return; // нельзя редактировать будущее
+    const current = valueByHabit.get(h.id)?.get(date) ?? null;
+    const unit = h.unit ? ` (${h.unit})` : "";
+    const input = window.prompt(
+      `${h.name}${unit} за ${date.slice(8)}.${date.slice(5, 7)}:`,
+      current == null ? "" : String(current),
+    );
+    if (input === null) return; // Cancel
+    const t = input.trim().replace(",", ".");
+    const value = t === "" ? null : Number(t);
+    void setHabitValueLocal({
+      userId,
+      habitId: h.id,
+      date,
+      value: value != null && Number.isFinite(value) ? value : null,
+    });
   }
 
   const rangeLabel = `${days[0].slice(8)}–${days[6].slice(8)}.${days[6].slice(5, 7)}`;
@@ -262,14 +390,37 @@ function WeekTab({ habits, doneByHabit }: HabitData) {
           <tbody>
             {habits.map((h) => {
               const done = doneByHabit.get(h.id) ?? new Set<string>();
+              const values = valueByHabit.get(h.id) ?? new Map<string, number>();
+              const numeric = h.type === "numeric";
               return (
                 <tr key={h.id}>
                   <td className="pr-1.5 align-middle">
                     <span className="text-base">{h.icon ?? "•"}</span>
                   </td>
                   {days.map((d) => {
-                    const isDone = done.has(d);
                     const future = d > today;
+                    if (numeric) {
+                      const v = values.get(d) ?? null;
+                      const has = v != null;
+                      return (
+                        <td key={d} className="p-0.5 text-center">
+                          <button
+                            onClick={() => editValue(h, d)}
+                            disabled={future}
+                            aria-label={`${h.name} ${d}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[10px] font-semibold transition disabled:opacity-30"
+                            style={{
+                              background: has ? h.color : "var(--brand-50)",
+                              color: has ? "#fff" : "var(--brand-400)",
+                              border: has ? "none" : "1px solid var(--brand-200)",
+                            }}
+                          >
+                            {has ? v : ""}
+                          </button>
+                        </td>
+                      );
+                    }
+                    const isDone = done.has(d);
                     return (
                       <td key={d} className="p-0.5 text-center">
                         <button
@@ -292,7 +443,8 @@ function WeekTab({ habits, doneByHabit }: HabitData) {
         </table>
       </div>
       <p className="mt-2 text-[11px] text-muted">
-        Тапни клетку, чтобы отметить день. Будущие дни недоступны.
+        Тапни клетку, чтобы отметить день (для числовых — ввести значение).
+        Будущие дни недоступны.
       </p>
     </Section>
   );
@@ -300,37 +452,127 @@ function WeekTab({ habits, doneByHabit }: HabitData) {
 
 // ---------------- Статистика ----------------
 
-function StatsTab({ habits, doneByHabit }: HabitData) {
+function StatsTab({ habits, doneByHabit, valueByHabit }: HabitData) {
   return (
     <div className="flex flex-col gap-2">
-      {habits.map((h) => {
-        const done = doneByHabit.get(h.id) ?? new Set<string>();
-        const streak = currentStreak(h, done);
-        const best = bestDailyStreak(done);
-        const rate = completionRate(h, done, 30);
-        const heatmap = buildHeatmap(done, 13);
-        return (
-          <Section key={h.id}>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-xl">{h.icon ?? "•"}</span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-ink">{h.name}</div>
-                <div className="text-[11px] text-muted">{freqLabel(h)}</div>
-              </div>
-              <DeleteHabit id={h.id} name={h.name} />
-            </div>
-
-            <div className="mb-3 grid grid-cols-3 gap-2">
-              <Stat value={`🔥 ${streak}`} label="серия" />
-              <Stat value={`🏆 ${best}`} label="рекорд" />
-              <Stat value={`${rate}%`} label="за 30 дней" />
-            </div>
-
-            <Heatmap cols={heatmap} color={h.color} />
-          </Section>
-        );
-      })}
+      {habits.map((h) =>
+        h.type === "numeric" ? (
+          <NumericStatsCard
+            key={h.id}
+            habit={h}
+            values={valueByHabit.get(h.id) ?? new Map<string, number>()}
+          />
+        ) : (
+          <BinaryStatsCard
+            key={h.id}
+            habit={h}
+            done={doneByHabit.get(h.id) ?? new Set<string>()}
+          />
+        ),
+      )}
     </div>
+  );
+}
+
+function StatsHeader({ habit }: { habit: HabitRow }) {
+  return (
+    <div className="mb-2 flex items-center gap-2">
+      <span className="text-xl">{habit.icon ?? "•"}</span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold text-ink">{habit.name}</div>
+        <div className="text-[11px] text-muted">{freqLabel(habit)}</div>
+      </div>
+      <DeleteHabit id={habit.id} name={habit.name} />
+    </div>
+  );
+}
+
+function BinaryStatsCard({ habit, done }: { habit: HabitRow; done: Set<string> }) {
+  const streak = currentStreak(habit, done);
+  const best = bestDailyStreak(done);
+  const rate = completionRate(habit, done, 30);
+  const heatmap = buildHeatmap(done, 13);
+  return (
+    <Section>
+      <StatsHeader habit={habit} />
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        <Stat value={`🔥 ${streak}`} label="серия" />
+        <Stat value={`🏆 ${best}`} label="рекорд" />
+        <Stat value={`${rate}%`} label="за 30 дней" />
+      </div>
+      <Heatmap cols={heatmap} color={habit.color} />
+    </Section>
+  );
+}
+
+function fmtNum(n: number | null): string {
+  if (n == null) return "—";
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+function NumericStatsCard({
+  habit,
+  values,
+}: {
+  habit: HabitRow;
+  values: Map<string, number>;
+}) {
+  const s = numericStats(values);
+  const series = numericSeries(values, 30);
+  const unit = habit.unit ? ` ${habit.unit}` : "";
+  return (
+    <Section>
+      <StatsHeader habit={habit} />
+      {s.count === 0 ? (
+        <EmptyState emoji="📈" title="Нет записей" hint="Введи значение во вкладке «Сегодня»" />
+      ) : (
+        <>
+          <div className="mb-2 grid grid-cols-3 gap-2">
+            <Stat value={`${fmtNum(s.last)}${unit}`} label="последнее" />
+            <Stat value={`${fmtNum(s.min)}${unit}`} label="мин" />
+            <Stat value={`${fmtNum(s.max)}${unit}`} label="макс" />
+          </div>
+          <div className="mb-2 text-center text-[11px] text-muted">
+            среднее: {fmtNum(s.avg)}{unit} · записей: {s.count}
+          </div>
+          <Sparkline points={series.map((p) => p.value)} color={habit.color} />
+        </>
+      )}
+    </Section>
+  );
+}
+
+function Sparkline({ points, color }: { points: number[]; color: string }) {
+  if (points.length < 2) {
+    return (
+      <div className="text-center text-[11px] text-muted">
+        Мало точек для графика
+      </div>
+    );
+  }
+  const W = 280;
+  const H = 48;
+  const pad = 3;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const stepX = (W - pad * 2) / (points.length - 1);
+  const coords = points.map((v, i) => {
+    const x = pad + i * stepX;
+    const y = pad + (H - pad * 2) * (1 - (v - min) / range);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none">
+      <polyline
+        points={coords.join(" ")}
+        fill="none"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
