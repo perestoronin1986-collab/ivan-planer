@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useSubtasksMap } from "@/lib/local/useSubtasks";
 import type { SphereRow, ProjectRow, TaskRow } from "@/lib/db";
 import { WeekDayColumn } from "./WeekDayColumn";
+
+const HIDE_DONE_KEY = "week:hideDone";
 
 type SphereLite = Pick<SphereRow, "id" | "name" | "color" | "icon">;
 type ProjectLite = Pick<ProjectRow, "id" | "name">;
@@ -26,6 +28,17 @@ export function WeekGrid({
   spheres: SphereInput[];
   projects: ProjectLite[];
 }) {
+  const [hideDone, setHideDone] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(HIDE_DONE_KEY);
+    if (stored !== null) setHideDone(stored === "true");
+  }, []);
+
+  function toggleHideDone(val: boolean) {
+    setHideDone(val);
+    localStorage.setItem(HIDE_DONE_KEY, String(val));
+  }
   const depKey = days.map((d) => d.key).join(",");
   const data = useLiveQuery(async () => {
     const db = localDb();
@@ -99,20 +112,34 @@ export function WeekGrid({
 
   return (
     <div className="flex flex-col gap-2">
-      {days.map((day) => (
-        <WeekDayColumn
-          key={day.key}
-          dayLabel={day.label}
-          dayKey={day.key}
-          today={day.today}
-          spheres={spheres}
-          projects={projects}
-          tasks={byDay.get(day.key) ?? []}
-          sphereById={sphereById}
-          projectById={projectById}
-          subtasksByParentId={subtasksByParentId}
+      <label className="flex items-center gap-2 self-start cursor-pointer select-none text-sm text-[var(--brand-700)]">
+        <input
+          type="checkbox"
+          checked={hideDone}
+          onChange={(e) => toggleHideDone(e.target.checked)}
+          className="accent-[var(--brand-500)] w-4 h-4"
         />
-      ))}
+        Скрывать выполненные
+      </label>
+      {days.map((day) => {
+        const tasks = (byDay.get(day.key) ?? []).filter(
+          (t) => !hideDone || t.status !== "done",
+        );
+        return (
+          <WeekDayColumn
+            key={day.key}
+            dayLabel={day.label}
+            dayKey={day.key}
+            today={day.today}
+            spheres={spheres}
+            projects={projects}
+            tasks={tasks}
+            sphereById={sphereById}
+            projectById={projectById}
+            subtasksByParentId={subtasksByParentId}
+          />
+        );
+      })}
     </div>
   );
 }
