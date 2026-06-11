@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import { useSubtasksMap } from "@/lib/local/useSubtasks";
@@ -8,6 +8,17 @@ import type { SphereRow, ProjectRow, TaskRow } from "@/lib/db";
 import { WeekDayColumn } from "./WeekDayColumn";
 
 const HIDE_DONE_KEY = "week:hideDone";
+
+// "storage" срабатывает только в других вкладках, поэтому для текущей
+// вкладки toggleHideDone дополнительно шлёт кастомное событие.
+function subscribeHideDone(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(HIDE_DONE_KEY, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(HIDE_DONE_KEY, onChange);
+  };
+}
 
 type SphereLite = Pick<SphereRow, "id" | "name" | "color" | "icon">;
 type ProjectLite = Pick<ProjectRow, "id" | "name">;
@@ -28,16 +39,15 @@ export function WeekGrid({
   spheres: SphereInput[];
   projects: ProjectLite[];
 }) {
-  const [hideDone, setHideDone] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(HIDE_DONE_KEY);
-    if (stored !== null) setHideDone(stored === "true");
-  }, []);
+  const hideDone = useSyncExternalStore(
+    subscribeHideDone,
+    () => localStorage.getItem(HIDE_DONE_KEY) === "true",
+    () => false,
+  );
 
   function toggleHideDone(val: boolean) {
-    setHideDone(val);
     localStorage.setItem(HIDE_DONE_KEY, String(val));
+    window.dispatchEvent(new Event(HIDE_DONE_KEY));
   }
   const depKey = days.map((d) => d.key).join(",");
   const data = useLiveQuery(async () => {

@@ -19,11 +19,12 @@ async function main() {
     try {
       await sql.unsafe(stmt);
       console.log("✓", stmt.slice(0, 60).replace(/\n/g, " "));
-    } catch (e: any) {
-      if (e.message?.includes("already exists")) {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("already exists")) {
         console.log("⚠ skip (exists):", stmt.slice(0, 60).replace(/\n/g, " "));
       } else {
-        console.error("✗", e.message);
+        console.error("✗", msg);
         await sql.end();
         process.exit(1);
       }

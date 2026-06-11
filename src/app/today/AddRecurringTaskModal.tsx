@@ -8,7 +8,6 @@ import { useUserId } from "@/lib/local/useUser";
 import {
   dialogClass,
   inputClass,
-  labelClass,
   primaryBtnClass,
   ghostBtnClass,
 } from "@/components/ui/formStyles";
@@ -185,9 +184,6 @@ export function AddRecurringTaskModal({
         ? "bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] text-white shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
         : "border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-900)]"
     }`;
-  const numCls =
-    "rounded-[10px] border border-[var(--brand-200)] bg-white px-2 py-1 text-sm text-center outline-none focus:border-[var(--brand-500)]";
-
   return (
     <>
       <button

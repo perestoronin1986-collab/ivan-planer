@@ -17,13 +17,19 @@ export function NotificationsSection() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const sup = isPushSupported();
-    setSupported(sup);
-    if (!sup) return;
-    setPermission(Notification.permission);
-    getCurrentSubscription()
-      .then((s) => setEnabled(!!s))
-      .catch(() => setEnabled(false));
+    let cancelled = false;
+    (async () => {
+      const sup = isPushSupported();
+      const perm = sup ? Notification.permission : "default";
+      const sub = sup ? await getCurrentSubscription().catch(() => null) : null;
+      if (cancelled) return;
+      setSupported(sup);
+      setPermission(perm);
+      setEnabled(!!sub);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function toggle() {

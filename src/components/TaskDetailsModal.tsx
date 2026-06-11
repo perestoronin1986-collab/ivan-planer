@@ -36,15 +36,21 @@ export function TaskDetailsModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Re-sync when task changes (e.g. parent edit)
-  useEffect(() => {
+  // Re-sync when task changes (e.g. parent edit) — adjust state during
+  // render, чтобы не было лишнего рендера со старыми значениями.
+  const syncKey = JSON.stringify([
+    task.id, task.title, task.description, task.priority, task.due_at, task.remind_at,
+  ]);
+  const [prevSyncKey, setPrevSyncKey] = useState(syncKey);
+  if (syncKey !== prevSyncKey) {
+    setPrevSyncKey(syncKey);
     setTitle(task.title);
     setDescription(task.description ?? "");
     setPriority(((task.priority as Priority) ?? 4) as Priority);
     setDueAt(task.due_at ? task.due_at.slice(0, 10) : "");
     setRemindAt(task.remind_at);
     setError(null);
-  }, [task.id, task.title, task.description, task.priority, task.due_at, task.remind_at]);
+  }
 
   useEffect(() => {
     const d = dialogRef.current;

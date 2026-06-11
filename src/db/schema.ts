@@ -9,6 +9,7 @@ import {
   pgEnum,
   index,
   check,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -88,7 +89,7 @@ export const task = pgTable(
     projectId: uuid("project_id").references(() => project.id, {
       onDelete: "cascade",
     }),
-    parentId: uuid("parent_id").references((): any => task.id, {
+    parentId: uuid("parent_id").references((): AnyPgColumn => task.id, {
       onDelete: "cascade",
     }),
     title: text("title").notNull(),

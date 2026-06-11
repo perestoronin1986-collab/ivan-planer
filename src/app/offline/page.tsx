@@ -8,6 +8,9 @@ export default function OfflinePage() {
         Откроется как только появится интернет. Локальные изменения сохранятся
         и отправятся автоматически.
       </p>
+      {/* Намеренно <a>, не <Link>: нужен полный reload, чтобы SW заново
+          попробовал сеть, а не клиентская навигация по кэшу роутера. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/"
         className="rounded-md bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600"
