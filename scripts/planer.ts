@@ -110,6 +110,40 @@ async function addTask(title: string) {
   console.log(`✓ задача «${data.title}» → проект «${project.name}»${when} (${data.id})`);
 }
 
+async function markDone(titlePart: string) {
+  const projectName = flag("project");
+  let query = db
+    .from("task")
+    .select("id, title, status")
+    .ilike("title", `%${titlePart}%`)
+    .is("deleted_at", null);
+  if (projectName) {
+    const project = await findProject(projectName);
+    query = query.eq("project_id", project.id);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const open = (data ?? []).filter((t) => t.status !== "done");
+  if (!open.length) throw new Error(`Незакрытая задача не найдена: ${titlePart}`);
+  if (open.length > 1) {
+    const found = open.map((t) => `  · ${t.title}`).join("\n");
+    throw new Error(
+      `Под «${titlePart}» подходит ${open.length} задач — уточни запрос или --project:\n${found}`,
+    );
+  }
+
+  // updated_at обязателен: на нём держится LWW-синк, иначе клиенты не увидят правку.
+  const stamp = new Date().toISOString();
+  const { error: updateError } = await db
+    .from("task")
+    .update({ status: "done", completed_at: stamp, updated_at: stamp })
+    .eq("id", open[0].id);
+  if (updateError) throw updateError;
+
+  console.log(`✓ закрыта «${open[0].title}»`);
+}
+
 async function list() {
   const target = flag("project");
   if (!target) {
@@ -145,9 +179,11 @@ const usage = `
 Использование:
   npm run planer -- project "Имя" [--sphere "Работа с ИИ"] [--desc "..."]
   npm run planer -- task "Заголовок" --project "CRM АфроЛатин" [--due 2026-07-20] [--due "2026-07-20 18:00"] [--priority 2] [--desc "..."]
+  npm run planer -- done "часть заголовка" [--project "CRM АфроЛатин"]
   npm run planer -- list [--project "CRM АфроЛатин"]
 
 priority: 1=срочно … 4=нет (по умолчанию 4)
+done: ищет незакрытую задачу по части заголовка; если подходит несколько — покажет их и ничего не тронет
 `.trim();
 
 async function main() {
@@ -155,6 +191,7 @@ async function main() {
 
   if (command === "project" && arg) return addProject(arg);
   if (command === "task" && arg) return addTask(arg);
+  if (command === "done" && arg) return markDone(arg);
   if (command === "list") return list();
 
   console.log(usage);
