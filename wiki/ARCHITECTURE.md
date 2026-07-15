@@ -45,7 +45,7 @@ tags:
 /auth/callback             OAuth callback Supabase
 /api/push/subscribe        POST — сохранить push_subscription
 /api/push/unsubscribe      POST — удалить push_subscription
-/api/cron/push             Vercel Cron */5min — отправка Web Push по notification.fire_at
+/api/cron/push             GitHub Actions */5min — отправка Web Push по notification.fire_at
 ```
 
 ---
@@ -58,7 +58,8 @@ Pipeline:
 task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
                                         │
                                         ▼
-                               Vercel Cron каждые 5 мин
+                    GitHub Actions cron каждые 5 мин  ◀── реальный драйвер
+                    (+ Vercel cron раз в сутки 06:00 UTC — подстраховка)
                                         │
                                         ▼
                              /api/cron/push → web-push.sendNotification()
@@ -69,6 +70,11 @@ task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
                                         ▼
                               showNotification → user
 ```
+
+> [!important] Крон живёт в GitHub Actions, не в Vercel
+> Пуши по факту гоняет `.github/workflows/cron-push.yml` (`*/5 * * * *`) — на Vercel Hobby крон нельзя чаще раза в сутки. `vercel.json` тоже бьёт этот эндпоинт, но раз в сутки в 06:00 UTC, то есть напоминания на нём одном не работали бы.
+> Секреты воркфлоу (Settings → Secrets → Actions): `CRON_URL` = `https://ivan-planer.vercel.app/api/cron/push`, `CRON_SECRET` = как в env Vercel.
+> Расписание GitHub Actions — best-effort: под нагрузкой запуск может опоздать. Для напоминаний терпимо.
 
 - **VAPID**: env `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` + клиентский `NEXT_PUBLIC_VAPID_PUBLIC_KEY`. Генерация: `npm run vapid`.
 - **CRON_SECRET**: проверяется в `/api/cron/push` через `Authorization: Bearer <secret>` или `?secret=`.

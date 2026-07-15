@@ -52,7 +52,7 @@
 - **feat(notifications):** Web Push pipeline.
   - Postgres trigger `sync_task_notification` зеркалит `task.remind_at` → `notification(fire_at)`. Сброс при done/delete/clearing remind_at.
   - `/api/push/subscribe` + `/api/push/unsubscribe` — POST: сохранение/удаление `push_subscription` для текущего пользователя.
-  - `/api/cron/push` — Vercel Cron `*/5 * * * *` (`vercel.json`). Читает pending notifications, шлёт `web-push.sendNotification()` всем подпискам пользователя, помечает `sent_at`, удаляет 410-Gone endpoints.
+  - `/api/cron/push` — крон `*/5 * * * *`. Читает pending notifications, шлёт `web-push.sendNotification()` всем подпискам пользователя, помечает `sent_at`, удаляет 410-Gone endpoints. (Изначально `vercel.json`; фактически гоняется из GitHub Actions — Vercel Hobby режет крон до раза в сутки. Уточнено 2026-07-15.)
   - SW (`public/sw.js` v6): `push` → `showNotification`, `notificationclick` → `/today`.
   - Клиент: `src/lib/webPushClient.ts` — `subscribePush()` / `unsubscribePush()` / `getCurrentSubscription()` / `isPushSupported()`.
   - UI: `NotificationsSection` в `/settings` — тоггл вкл/выкл, статус разрешения, хинт для iOS PWA.
