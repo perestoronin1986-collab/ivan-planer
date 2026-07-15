@@ -1,0 +1,50 @@
+filters:
+  and:
+    - file.hasTag("feature")
+properties:
+  status:
+    displayName: Статус
+  deployed:
+    displayName: Деплой
+  migration:
+    displayName: Миграция
+  area:
+    displayName: Область
+  updated:
+    displayName: Обновлено
+views:
+  - type: table
+    name: 🔧 Миграция / деплой
+    filters:
+      or:
+        - note.deployed == false
+        - note.migration != ""
+    order:
+      - file.name
+      - status
+      - deployed
+      - migration
+      - updated
+    sort:
+      - property: updated
+        direction: DESC
+  - type: table
+    name: 📋 В очереди
+    filters:
+      and:
+        - note.status == "planned"
+    order:
+      - file.name
+      - area
+  - type: table
+    name: ✅ Все фичи
+    order:
+      - file.name
+      - area
+      - status
+      - deployed
+      - migration
+      - updated
+    sort:
+      - property: updated
+        direction: DESC
