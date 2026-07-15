@@ -1,4 +1,13 @@
+---
+title: Архитектура IvanPlaner
+updated: 2026-05-26
+tags:
+  - architecture
+---
 # Архитектура IvanPlaner
+
+> [!tip] Навигация
+> Схема → [[DATABASE]] · дизайн → [[DESIGN]] · уроки → [[ERRORS]] · статус фич → [[HOME]] + `Features/`.
 
 > Последнее обновление: 2026-05-26
 
@@ -269,3 +278,30 @@ UI (useLiveQuery)  →  Dexie (IndexedDB)
 - **Auth оффлайн:** Supabase JWT кэширован в localStorage (~1ч), refresh без сети упадёт. Решение по необходимости — продлить срок сессии
 - **Размер кэша:** app shell + иконки ~2-5 МБ, IndexedDB до 50 МБ на Android безопасно
 - **Конфликты:** последняя запись по `updated_at` побеждает; field-level merge не делаем — один пользователь, конфликтов мало
+
+---
+
+## Скрипты (dev)
+
+`scripts/*.ts`, запуск через `tsx`. Работают вне Next.js — env читают сами (`dotenv` → `.env.local`).
+
+| Скрипт | Команда | Зачем |
+|--------|---------|-------|
+| `vapid.ts` | `npm run vapid` | Сгенерировать VAPID-пару для push |
+| `migrate.ts` | — | Прогон `drizzle/*.sql` напрямую (TCP; обычно недоступен, см. [[ERRORS]]) |
+| `planer.ts` | `npm run planer -- <cmd>` | Завести проект/задачу из CLI, минуя UI |
+
+### `planer.ts`
+
+Нужен, чтобы ассистент заводил задачи по другим проектам без ручного клика в UI. Пишет через **PostgREST + `SUPABASE_SERVICE_ROLE_KEY`** — RLS (`user_id = auth.uid()`) режет любой доступ без сессии, а прямой TCP к Postgres заблокирован. `user_id` берётся из найденной сферы/проекта, не из env.
+
+```bash
+npm run planer -- task "Заголовок" --project "CRM АфроЛатин" [--due 2026-07-20] [--priority 2] [--desc "..."]
+npm run planer -- project "Имя" [--sphere "Работа с ИИ"] [--desc "..."]
+npm run planer -- list [--project "..."]
+```
+
+> [!warning] Правила
+> - Сфера/проект ищутся по имени (`ilike`) — при переименовании команды ломаются, это осознанный размен на удобство.
+> - Даты только через `toIso()`; голая дата = 12:00 местного, чтобы не улетать в соседний день при конверсии в UTC.
+> - Скрипт работает мимо offline-слоя: пишет в Postgres напрямую, Dexie/outbox не трогает. Клиент подтянет запись обычным sync по `updated_at`.
