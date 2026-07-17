@@ -81,6 +81,9 @@ tags:
 | Идея | Заметка |
 |------|---------|
 | Middleware → proxy файл | Next.js 16 deprecated warning |
+| local-first для /today /week /month | Аудит 17.07: sphere/project уже в Dexie, а страницы ходят на сервер. Перевод = мгновенная навигация + оффлайн + чинит TZ-баг бакетинга (month/page.tsx:74 — UTC-сервер кладёт задачу 00:30 МСК в чужую клетку). Задача в планере |
+| processOverdueTasks → cron | Аудит 17.07: сейчас write-on-read при каждом открытии today/week/month. Задача в планере |
+| Главная на дизайн-систему | Аудит 17.07: 200 строк инлайн-стилей мимо PageShell/Section. Задача в планере |
 | Тесты (Playwright) | E2E smoke test |
 | Логирование ошибок (Sentry) | Аналогично AfroLatin |
 | Пагинация inbox | При большом количестве записей |
