@@ -400,6 +400,89 @@ export async function createRecurringTaskLocal(
   return { templateId, count: occurrences.length };
 }
 
+/**
+ * Ends a recurring series early.
+ *
+ * The passed occurrence is closed as done (the user did it one last time);
+ * every other still-open occurrence of the same series is dropped, and the
+ * template records the cut-off in `rrule_until`.
+ *
+ * Everything runs in one Dexie transaction. A half-ended series (current one
+ * closed, future ones left behind) reads to the user as "the button did
+ * nothing" and invites a second press.
+ */
+export async function endRecurringSeriesLocal(
+  occurrenceId: string,
+): Promise<void> {
+  const db = localDb();
+  const occurrence = await db.task.get(occurrenceId);
+  if (!occurrence) throw new Error(`Task ${occurrenceId} not found`);
+
+  const templateId = occurrence.parent_id;
+  if (!templateId) throw new Error("Задача не входит в регулярную серию");
+
+  const nowIso = now();
+  const siblings = await db.task.where("parent_id").equals(templateId).toArray();
+  // Everything still open other than the one being closed. The /recurring
+  // list surfaces the earliest open occurrence, so these are all later —
+  // no due_at comparison needed.
+  const toCancel = siblings.filter(
+    (t) => t.id !== occurrenceId && !t.deleted_at && t.status !== "done",
+  );
+  const template = await db.task.get(templateId);
+
+  const closed: TaskRow = {
+    ...occurrence,
+    status: "done",
+    completed_at: nowIso,
+    updated_at: nowIso,
+  };
+  const endedTemplate: TaskRow | null = template
+    ? { ...template, rrule_until: nowIso, updated_at: nowIso }
+    : null;
+
+  await db.transaction("rw", db.task, db.outbox, async () => {
+    await db.task.put(closed);
+    if (toCancel.length) {
+      await db.task.bulkDelete(toCancel.map((t) => t.id));
+    }
+    if (endedTemplate) await db.task.put(endedTemplate);
+
+    await db.outbox.bulkAdd([
+      {
+        op: "update" as const,
+        table: "task" as const,
+        row_id: closed.id,
+        payload: closed as unknown as Record<string, unknown>,
+        created_at: Date.now(),
+        attempts: 0,
+      },
+      ...toCancel.map((t) => ({
+        op: "delete" as const,
+        table: "task" as const,
+        row_id: t.id,
+        payload: { id: t.id },
+        created_at: Date.now(),
+        attempts: 0,
+      })),
+      ...(endedTemplate
+        ? [
+            {
+              op: "update" as const,
+              table: "task" as const,
+              row_id: endedTemplate.id,
+              payload: endedTemplate as unknown as Record<string, unknown>,
+              created_at: Date.now(),
+              attempts: 0,
+            },
+          ]
+        : []),
+    ]);
+  });
+
+  void runSync();
+}
+
 // ---------------- Sphere / Project (basic) ----------------
 
 export async function addSphereLocal(
