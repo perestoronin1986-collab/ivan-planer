@@ -10,6 +10,7 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
     .select("id, overdue_action")
     .lt("due_at", startOfToday)
     .neq("status", "done")
+    .is("deleted_at", null)
     .not("overdue_action", "is", null);
 
   if (!overdue?.length) return;
