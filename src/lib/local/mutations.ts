@@ -423,12 +423,17 @@ export async function endRecurringSeriesLocal(
 
   const nowIso = now();
   const siblings = await db.task.where("parent_id").equals(templateId).toArray();
-  // Everything still open other than the one being closed. The /recurring
-  // list surfaces the earliest open occurrence, so these are all later —
-  // no due_at comparison needed.
+  // Every still-open sibling, deliberately without a `due_at > occurrence`
+  // bound. /recurring surfaces a series through its earliest open occurrence,
+  // so any open sibling left behind — including one that became open again on
+  // another device — would keep the series on the screen the press was meant
+  // to clear it from. Cancelling the series cancels its unfinished past too.
   const toCancel = siblings.filter(
     (t) => t.id !== occurrenceId && !t.deleted_at && t.status !== "done",
   );
+  // Missing template means a partially synced client. Skipping the
+  // `rrule_until` stamp is better than throwing: the stamp is bookkeeping,
+  // and failing here would leave the user with a series they cannot end.
   const template = await db.task.get(templateId);
 
   const closed: TaskRow = {
@@ -448,6 +453,11 @@ export async function endRecurringSeriesLocal(
     }
     if (endedTemplate) await db.task.put(endedTemplate);
 
+    // Straight to the outbox instead of enqueueMutation, same as
+    // createRecurringTaskLocal: the collapse step runs its own writes, which
+    // costs a round-trip per row. Unlike that function these rows already
+    // exist and may have a pending entry, so a row can end up with two —
+    // harmless, the queue is FIFO and the later entry decides the final state.
     await db.outbox.bulkAdd([
       {
         op: "update" as const,
