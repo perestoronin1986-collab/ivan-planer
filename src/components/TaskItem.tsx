@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckSquare, Square, Pencil, Check, X, Bell } from "lucide-react";
+import { CheckSquare, Square, Pencil, Check, X, Bell, CircleSlash } from "lucide-react";
 import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 import {
   toggleTaskStatusLocal,
@@ -9,6 +9,7 @@ import {
   deleteTaskLocal,
 } from "@/lib/local/mutations";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { ConfirmActionButton } from "@/components/ConfirmActionButton";
 import { TaskDetailsModal } from "@/components/TaskDetailsModal";
 import { priorityMeta } from "@/lib/priority";
 import { AutoLinkText } from "@/lib/autolink";
@@ -25,6 +26,7 @@ export function TaskItem({
   showSphere = true,
   showProject = true,
   showDate = true,
+  onEndSeries,
 }: {
   task: TaskRow;
   sphere?: SphereLite | null;
@@ -34,6 +36,8 @@ export function TaskItem({
   showSphere?: boolean;
   showProject?: boolean;
   showDate?: boolean;
+  /** Present only on /recurring — renders the "end the series" button. */
+  onEndSeries?: () => void | Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -179,7 +183,20 @@ export function TaskItem({
             {!sphere && !project && !task.due_at && (
               <span className="text-neutral-300 dark:text-neutral-700">—</span>
             )}
-            <div className="ml-auto flex-shrink-0">
+            <div className="ml-auto flex flex-shrink-0 items-center gap-1">
+              {onEndSeries && (
+                <ConfirmActionButton
+                  onConfirm={onEndSeries}
+                  icon={<CircleSlash size={14} />}
+                  message="Завершить регулярку?"
+                  description="Задача закроется как выполненная, будущие повторы отменятся."
+                  confirmLabel="Завершить"
+                  busyLabel="Завершаю…"
+                  confirmClassName="bg-amber-600 text-white hover:bg-amber-700"
+                  className="text-neutral-300 hover:text-amber-600"
+                  ariaLabel="Завершить регулярку"
+                />
+              )}
               <ConfirmDeleteButton
                 onConfirm={() => deleteTaskLocal(task.id)}
                 message="Удалить задачу?"

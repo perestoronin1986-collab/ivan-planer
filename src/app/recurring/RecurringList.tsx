@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
+import { endRecurringSeriesLocal } from "@/lib/local/mutations";
 import { TaskItem } from "@/components/TaskItem";
 import type { TaskRow } from "@/lib/db";
 
@@ -111,6 +112,7 @@ export function RecurringList() {
               task={t}
               sphere={t.sphere_id ? sphereById.get(t.sphere_id) ?? null : null}
               project={t.project_id ? projectById.get(t.project_id) ?? null : null}
+              onEndSeries={() => endRecurringSeriesLocal(t.id)}
             />
           ))}
         </div>
