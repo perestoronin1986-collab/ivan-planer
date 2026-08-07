@@ -1,14 +1,28 @@
 name: cron-push
-# External cron — Vercel Hobby plan limits crons to daily.
-# GitHub Actions runs schedule every 5 minutes (best-effort, may lag under
-# heavy GitHub load — acceptable for reminders).
+# Fallback pinger for /api/cron/push. NOT the primary driver.
+#
+# Primary: external cron service (cron-job.org) hits the same endpoint every
+# 5 minutes with `Authorization: Bearer <CRON_SECRET>`.
+# Backstop: vercel.json cron, daily at 06:00 UTC (Vercel Hobby caps crons at
+# once per day).
+#
+# Why this workflow is hourly and not */5:
+#   GitHub throttles high-frequency schedules. With "*/5 * * * *" the observed
+#   cadence over 831 runs was ~1 run/hour with gaps up to 3 hours, so the
+#   5-minute promise was never kept. It also produced runner-capacity noise
+#   ("The job was not acquired by Runner of type hosted", 2026-08-06).
+#   Hourly is honest about what GitHub actually delivers.
+#
+# Double-firing is safe: /api/cron/push marks notification.sent_at, so a
+# notification already sent by the external cron is skipped here.
 #
 # Required secrets (Settings -> Secrets -> Actions):
 #   CRON_URL    = https://ivan-planer.vercel.app/api/cron/push
 #   CRON_SECRET = same as Vercel env var
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Off the top of the hour — GitHub's scheduler is most congested at :00.
+    - cron: "23 * * * *"
   workflow_dispatch: {}
 
 jobs:
