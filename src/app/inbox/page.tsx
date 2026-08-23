@@ -22,16 +22,21 @@ export default function InboxPage() {
       .sort((a, b) => b.created_at.localeCompare(a.created_at)),
   );
 
+  // Второй ключ сортировки обязателен: `order` сейчас у всех записей 0 (руками
+  // порядок нигде не задаётся), сравнение возвращает 0, и список остаётся в том
+  // порядке, в каком его отдал Dexie — то есть по uuid. Выпадашки инбокса из-за
+  // этого показывали сферы и проекты вперемешку, хотя на /projects тот же список
+  // идёт по дате создания.
   const spheres = useLiveQuery(async () =>
     (await localDb().sphere.toArray())
       .filter((s) => !s.deleted_at && !s.archived)
-      .sort((a, b) => a.order - b.order),
+      .sort((a, b) => a.order - b.order || a.created_at.localeCompare(b.created_at)),
   );
 
   const projects = useLiveQuery(async () =>
     (await localDb().project.toArray())
       .filter((p) => !p.deleted_at)
-      .sort((a, b) => a.order - b.order),
+      .sort((a, b) => a.order - b.order || a.created_at.localeCompare(b.created_at)),
   );
 
   if (userId === undefined) {
