@@ -39,6 +39,17 @@ jobs:
             echo "Missing CRON_URL or CRON_SECRET secret"
             exit 1
           fi
-          curl -fsS -X POST \
+          # Not `curl -f`: it swallows both the status code and the body, so a
+          # failure surfaced only as "exit code 22" and told us nothing about
+          # whether the secret was wrong (401) or the endpoint blew up (500).
+          body=$(curl -sS -X POST \
             -H "Authorization: Bearer $CRON_SECRET" \
-            "$CRON_URL"
+            -w "\n%{http_code}" \
+            "$CRON_URL")
+          code=${body##*$'\n'}
+          echo "HTTP $code"
+          echo "${body%$'\n'*}"
+          if [ "$code" != "200" ]; then
+            echo "::error::/api/cron/push returned $code"
+            exit 1
+          fi
