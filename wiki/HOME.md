@@ -4,7 +4,7 @@ type: Планер задач
 stack: Next.js 16, Supabase Postgres (PostgREST), Vercel
 prod: Vercel (autodeploy main)
 repo: https://github.com/perestoronin1986-collab/ivan-planer
-updated: 2026-06-02
+updated: 2026-08-26
 tags:
   - moc
 aliases:
@@ -35,6 +35,7 @@ aliases:
 ## Ключевые фичи
 - [[Features/offline-pwa|Offline/PWA]] · [[Features/habits|Привычки]] · [[Features/numeric-habits|Числовые привычки]]
 - [[Features/push-notifications|Push]] · [[Features/priorities|Приоритеты]] · [[Features/design-system|Дизайн-система]]
+- [[Features/frozen-tasks|Заморозка задач]] — вкладка «❄ Заморожено» на `/today`
 - Очередь: [[Features/dnd-week|DnD в /week]] · [[Features/okr-goals|Цели/OKR]]
 
 ## Быстрый старт

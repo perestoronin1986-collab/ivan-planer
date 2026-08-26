@@ -50,6 +50,11 @@ export type TaskRow = {
   completed_at: string | null;
   created_at: string;
   overdue_action: OverdueAction | null;
+  /**
+   * Set = task is frozen: hidden from the overdue/active lists on /today and
+   * shown in the "Заморожено" tab instead. due_at is kept as-is.
+   */
+  frozen_at: string | null;
 } & SyncMeta;
 
 export type InboxItemRow = {

@@ -11,6 +11,7 @@ export async function processOverdueTasks(supabase: SupabaseClient) {
     .lt("due_at", startOfToday)
     .neq("status", "done")
     .is("deleted_at", null)
+    .is("frozen_at", null) // frozen tasks are parked: never auto-complete them
     .not("overdue_action", "is", null);
 
   if (!overdue?.length) return;

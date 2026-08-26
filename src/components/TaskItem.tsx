@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { CheckSquare, Square, Pencil, Check, X, Bell, CircleSlash } from "lucide-react";
+import {
+  CheckSquare,
+  Square,
+  Pencil,
+  Check,
+  X,
+  Bell,
+  CircleSlash,
+  Snowflake,
+  Undo2,
+} from "lucide-react";
 import type { TaskRow, SphereRow, ProjectRow } from "@/lib/db";
 import {
   toggleTaskStatusLocal,
@@ -27,6 +37,8 @@ export function TaskItem({
   showProject = true,
   showDate = true,
   onEndSeries,
+  onFreeze,
+  onUnfreeze,
 }: {
   task: TaskRow;
   sphere?: SphereLite | null;
@@ -38,6 +50,10 @@ export function TaskItem({
   showDate?: boolean;
   /** Present only on /recurring — renders the "end the series" button. */
   onEndSeries?: () => void | Promise<void>;
+  /** Renders the ❄ button that parks the task in the frozen list. */
+  onFreeze?: () => void | Promise<void>;
+  /** Renders the ↩ button that brings a frozen task back. */
+  onUnfreeze?: () => void | Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -184,6 +200,28 @@ export function TaskItem({
               <span className="text-neutral-300 dark:text-neutral-700">—</span>
             )}
             <div className="ml-auto flex flex-shrink-0 items-center gap-1">
+              {onFreeze && !done && (
+                <button
+                  type="button"
+                  onClick={() => onFreeze()}
+                  className="text-neutral-300 hover:text-sky-500"
+                  title="Заморозить — убрать из списков, но не потерять"
+                  aria-label="Заморозить"
+                >
+                  <Snowflake size={14} />
+                </button>
+              )}
+              {onUnfreeze && (
+                <button
+                  type="button"
+                  onClick={() => onUnfreeze()}
+                  className="text-neutral-300 hover:text-emerald-600"
+                  title="Разморозить — вернуть в список задач"
+                  aria-label="Разморозить"
+                >
+                  <Undo2 size={14} />
+                </button>
+              )}
               {onEndSeries && (
                 <ConfirmActionButton
                   onConfirm={onEndSeries}

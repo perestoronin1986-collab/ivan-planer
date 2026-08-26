@@ -9,7 +9,7 @@ tags:
 > [!tip] Живой статус
 > Деплой/миграции/очередь — в дэшборде [[HOME]] ([[Status.base]] по `Features/`). Здесь — полный список.
 
-> Последнее обновление: 2026-08-02
+> Последнее обновление: 2026-08-26
 
 ---
 
@@ -28,6 +28,7 @@ tags:
 - `/tasks` — все задачи пользователя
 - Повторяющиеся задачи (weekly / monthly / interval, rrule, лимит 500)
 - `processOverdueTasks` — reschedule или autocomplete при просрочке
+- Заморозка задач: вкладка «❄ Заморожено» на `/today` ([[Features/frozen-tasks]])
 - `carry_count` — счётчик переносов задачи
 - Валидация через Zod во всех server actions
 - Деплой на Vercel, автодеплой из `main`

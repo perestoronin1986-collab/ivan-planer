@@ -103,6 +103,7 @@ export async function processInboxToTaskLocal(args: {
     updated_at: now(),
     deleted_at: null,
     overdue_action: null,
+    frozen_at: null,
   };
 
   const inboxPatch = {
@@ -170,6 +171,7 @@ export async function addTaskLocal(args: {
     updated_at: now(),
     deleted_at: null,
     overdue_action: args.overdueAction ?? null,
+    frozen_at: null,
   };
   await localDb().task.put(row);
   await enqueueMutation("insert", "task", row.id, row);
@@ -199,6 +201,20 @@ export async function toggleTaskStatusLocal(id: string): Promise<void> {
     status: nextStatus,
     completed_at: nextStatus === "done" ? now() : null,
   });
+}
+
+/**
+ * Freeze a task: park it in the "Заморожено" tab on /today instead of letting
+ * it sit in "Просрочено" forever. due_at is left untouched, so unfreezing
+ * restores the task exactly where it was.
+ */
+export async function freezeTaskLocal(id: string): Promise<void> {
+  await updateTaskLocal(id, { frozen_at: now() });
+}
+
+/** Undo a freeze — the task returns to the regular /today lists. */
+export async function unfreezeTaskLocal(id: string): Promise<void> {
+  await updateTaskLocal(id, { frozen_at: null });
 }
 
 export async function deleteTaskLocal(id: string): Promise<void> {
@@ -343,6 +359,7 @@ export async function createRecurringTaskLocal(
     updated_at: nowIso,
     deleted_at: null,
     overdue_action: overdueAction,
+    frozen_at: null,
   };
 
   const occurrences: TaskRow[] = dates.map((d) => ({
@@ -368,6 +385,7 @@ export async function createRecurringTaskLocal(
     updated_at: nowIso,
     deleted_at: null,
     overdue_action: overdueAction,
+    frozen_at: null,
   }));
 
   const db = localDb();

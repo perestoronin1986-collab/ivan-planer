@@ -105,6 +105,20 @@ export class LocalDB extends Dexie {
       habit: "id, user_id, updated_at, deleted_at, order, archived",
       habit_log: "id, user_id, habit_id, date, [habit_id+date], updated_at, deleted_at",
     });
+    // v5: frozen tasks — index frozen_at so /today can split the lists.
+    // Dexie skips rows with an undefined indexed value, so existing tasks are
+    // backfilled to null (= not frozen) instead of dropping out of queries.
+    this.version(5)
+      .stores({
+        task:
+          "id, user_id, sphere_id, project_id, parent_id, status, due_at, priority, frozen_at, updated_at, deleted_at, order",
+      })
+      .upgrade(async (tx) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await tx.table("task").toCollection().modify((t: any) => {
+          if (t.frozen_at === undefined) t.frozen_at = null;
+        });
+      });
   }
 }
 

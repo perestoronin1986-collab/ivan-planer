@@ -103,6 +103,9 @@ export const task = pgTable(
     priority: integer("priority").default(4).notNull(),
     carryCount: integer("carry_count").default(0).notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    // Set = task is parked in the "Заморожено" tab on /today: out of the
+    // overdue/active lists, kept for later. See 0007_frozen_tasks.sql.
+    frozenAt: timestamp("frozen_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
