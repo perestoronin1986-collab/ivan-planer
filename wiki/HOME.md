@@ -36,6 +36,7 @@ aliases:
 - [[Features/offline-pwa|Offline/PWA]] · [[Features/habits|Привычки]] · [[Features/numeric-habits|Числовые привычки]]
 - [[Features/push-notifications|Push]] · [[Features/priorities|Приоритеты]] · [[Features/design-system|Дизайн-система]]
 - [[Features/frozen-tasks|Заморозка задач]] — вкладка «❄ Заморожено» на `/today`
+- [[Features/voice-inbox|Голосовой инбокс]] — диктовка 🎤 на `/inbox` + ярлык PWA «Записать мысль»
 - Очередь: [[Features/dnd-week|DnD в /week]] · [[Features/okr-goals|Цели/OKR]]
 
 ## Быстрый старт

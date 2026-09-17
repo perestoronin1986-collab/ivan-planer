@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { localDb } from "@/lib/local/db";
 import {
@@ -10,6 +10,8 @@ import {
   processInboxToTaskLocal,
 } from "@/lib/local/mutations";
 import { useUserId } from "@/lib/local/useUser";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
+import type { InboxSource } from "@/lib/db";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { PageShell, Section, EmptyState } from "@/components/ui";
 
@@ -59,9 +61,9 @@ export default function InboxPage() {
       subtitle="быстрые записи — потом разберёшь"
     >
       <QuickCapture
-        onAdd={async (content) => {
+        onAdd={async (content, source) => {
           if (!userId) return;
-          await addInboxItemLocal(userId, content);
+          await addInboxItemLocal(userId, content, source);
         }}
       />
 
@@ -112,35 +114,89 @@ export default function InboxPage() {
 function QuickCapture({
   onAdd,
 }: {
-  onAdd: (content: string) => Promise<void>;
+  onAdd: (content: string, source: InboxSource) => Promise<void>;
 }) {
   const [value, setValue] = useState("");
+  // Помним, что текст надиктован: при разборе видно, откуда мысль, а при
+  // кривом распознавании понятно, почему она выглядит странно.
+  const [dictated, setDictated] = useState(false);
+
+  const speech = useSpeechRecognition((text) => {
+    setDictated(true);
+    setValue((prev) => (prev ? `${prev.trimEnd()} ${text}` : text));
+  });
+
+  // Ярлык PWA ведёт на /inbox?rec=1 — поднимаем микрофон сразу, чтобы от
+  // долгого нажатия на иконку до диктовки было одно движение. Chrome может
+  // потребовать жеста пользователя — тогда автостарт молча не сработает и
+  // останется обычная кнопка, ничего не ломая.
+  const autoStartedRef = useRef(false);
+  const { supported, start } = speech;
+  useEffect(() => {
+    if (autoStartedRef.current || !supported) return;
+    if (new URLSearchParams(window.location.search).get("rec") !== "1") return;
+    autoStartedRef.current = true;
+    start();
+  }, [supported, start]);
+
   const trimmed = value.trim();
+
   return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        if (!trimmed) return;
-        await onAdd(trimmed);
-        setValue("");
-      }}
-      className="flex gap-2"
-    >
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Запиши мысль, идею, задачу…"
-        autoFocus
-        className="flex-1 rounded-[14px] border border-[var(--brand-200)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[var(--brand-500)]"
-      />
-      <button
-        type="submit"
-        disabled={!trimmed}
-        className="rounded-[14px] bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(124,58,237,0.4)] disabled:opacity-50"
+    <div className="flex flex-col gap-2">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!trimmed) return;
+          // Диктовка продолжалась бы поверх уже отправленной мысли.
+          if (speech.listening) speech.stop();
+          await onAdd(trimmed, dictated ? "voice" : "manual");
+          setValue("");
+          setDictated(false);
+        }}
+        className="flex gap-2"
       >
-        Записать
-      </button>
-    </form>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Запиши мысль, идею, задачу…"
+          autoFocus
+          className="flex-1 rounded-[14px] border border-[var(--brand-200)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[var(--brand-500)]"
+        />
+
+        {speech.supported && (
+          <button
+            type="button"
+            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            aria-label={speech.listening ? "Остановить диктовку" : "Надиктовать"}
+            aria-pressed={speech.listening}
+            className={`rounded-[14px] border px-4 py-2.5 text-sm font-semibold ${
+              speech.listening
+                ? "animate-pulse border-red-500 bg-red-500 text-white"
+                : "border-[var(--brand-200)] bg-white text-[var(--brand-600)]"
+            }`}
+          >
+            {speech.listening ? "⏹" : "🎤"}
+          </button>
+        )}
+
+        <button
+          type="submit"
+          disabled={!trimmed}
+          className="rounded-[14px] bg-[linear-gradient(135deg,#7c3aed,#8b5cf6)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(124,58,237,0.4)] disabled:opacity-50"
+        >
+          Записать
+        </button>
+      </form>
+
+      {speech.listening && (
+        <p className="text-xs text-muted">
+          🎙 Говори — текст появится в поле.{" "}
+          {speech.interim && <span className="italic">{speech.interim}</span>}
+        </p>
+      )}
+
+      {speech.error && <p className="text-xs text-red-600">{speech.error}</p>}
+    </div>
   );
 }
 

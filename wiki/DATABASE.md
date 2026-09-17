@@ -84,6 +84,8 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `id` | uuid PK | |
 | `user_id` | uuid | |
 | `content` | text | текст записи |
+| `source` | text | канал: `manual` (UI) · `vk` (вебхук) · `voice` (диктовка). CHECK `inbox_source_check` |
+| `vk_message_id` | bigint? | id сообщения VK — ключ идемпотентности вебхука |
 | `processed_at` | timestamptz? | когда обработана |
 | `converted_task_id` | uuid? FK→task | set null on delete |
 | `converted_sphere_id` | uuid? FK→sphere | set null on delete |
@@ -92,7 +94,14 @@ Constraint: `task_context_chk` — хотя бы один из `sphere_id`, `pro
 | `updated_at` | timestamptz | LWW marker |
 | `deleted_at` | timestamptz? | soft delete |
 
-Индексы: `inbox_user_idx`, `inbox_updated_idx` на `(user_id, updated_at)`
+Индексы: `inbox_user_idx`, `inbox_updated_idx` на `(user_id, updated_at)`, `inbox_vk_message_idx` — UNIQUE на `(vk_message_id)` `WHERE vk_message_id IS NOT NULL`
+
+> [!note] Зачем `vk_message_id`
+> VK Callback повторяет событие, если не ответить `ok` вовремя, а расшифровку
+> длинного голосового досылает отдельным `message_edit` по тому же сообщению.
+> И повтор, и досылка находят строку по этому id — без дублей мысли.
+> Индекс частичный: у записей из UI здесь NULL, а несколько NULL уникальности
+> не мешают.
 
 ---
 

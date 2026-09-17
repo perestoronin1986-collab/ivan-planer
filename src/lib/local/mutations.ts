@@ -10,6 +10,7 @@ import type {
   HabitRow,
   HabitType,
   InboxItemRow,
+  InboxSource,
   OverdueAction,
   ProjectRow,
   SphereRow,
@@ -39,11 +40,15 @@ function now(): string {
 export async function addInboxItemLocal(
   userId: string,
   content: string,
+  source: InboxSource = "manual",
 ): Promise<InboxItemRow> {
   const row: InboxItemRow = {
     id: uuid(),
     user_id: userId,
     content,
+    source,
+    // Проставляет только вебхук VK — локальная запись к сообщению не привязана.
+    vk_message_id: null,
     processed_at: null,
     converted_task_id: null,
     converted_sphere_id: null,

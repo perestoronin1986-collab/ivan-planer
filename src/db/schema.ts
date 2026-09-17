@@ -8,6 +8,8 @@ import {
   boolean,
   pgEnum,
   index,
+  uniqueIndex,
+  bigint,
   check,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
@@ -135,6 +137,13 @@ export const inboxItem = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(),
     content: text("content").notNull(),
+    // Канал, из которого приехала мысль: руками в UI, голосом через VK-бота,
+    // диктовкой на /inbox (Web Speech API).
+    source: text("source").notNull().default("manual"),
+    // id сообщения VK — ключ идемпотентности: Callback API повторяет событие,
+    // если не ответить `ok` вовремя, а расшифровку длинного голосового досылает
+    // отдельным `message_edit` по тому же сообщению.
+    vkMessageId: bigint("vk_message_id", { mode: "number" }),
     processedAt: timestamp("processed_at", { withTimezone: true }),
     convertedTaskId: uuid("converted_task_id").references(() => task.id, {
       onDelete: "set null",
@@ -157,6 +166,10 @@ export const inboxItem = pgTable(
   (t) => [
     index("inbox_user_idx").on(t.userId),
     index("inbox_updated_idx").on(t.userId, t.updatedAt),
+    uniqueIndex("inbox_vk_message_idx")
+      .on(t.vkMessageId)
+      .where(sql`${t.vkMessageId} IS NOT NULL`),
+    check("inbox_source_check", sql`${t.source} IN ('manual', 'vk', 'voice')`),
   ],
 );
 

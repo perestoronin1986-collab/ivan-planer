@@ -57,10 +57,17 @@ export type TaskRow = {
   frozen_at: string | null;
 } & SyncMeta;
 
+export type InboxSource = "manual" | "vk" | "voice";
+
 export type InboxItemRow = {
   id: string;
   user_id: string;
   content: string;
+  // Канал записи. 'vk' ставит вебхук, 'voice' — диктовка на /inbox.
+  source: InboxSource;
+  // Заполнен только у строк из VK — по нему вебхук ловит повтор события и
+  // досланную расшифровку голосового.
+  vk_message_id: number | null;
   processed_at: string | null;
   converted_task_id: string | null;
   converted_sphere_id: string | null;

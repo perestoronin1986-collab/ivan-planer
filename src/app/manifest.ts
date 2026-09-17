@@ -9,6 +9,16 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#c4b5fd",
+    // Долгое нажатие на иконку PWA → «Записать мысль»: открывает инбокс и
+    // сразу просит диктовку, без навигации по приложению.
+    shortcuts: [
+      {
+        name: "Записать мысль",
+        short_name: "Мысль",
+        url: "/inbox?rec=1",
+        icons: [{ src: "/icon1", sizes: "192x192", type: "image/png" }],
+      },
+    ],
     icons: [
       {
         src: "/icon1",
