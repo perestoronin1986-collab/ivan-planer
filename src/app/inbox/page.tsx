@@ -121,10 +121,20 @@ function QuickCapture({
   // кривом распознавании понятно, почему она выглядит странно.
   const [dictated, setDictated] = useState(false);
 
-  const speech = useSpeechRecognition((text) => {
+  // То, что было напечатано руками до начала диктовки. Движок отдаёт всю
+  // фразу заново на каждом уточнении, поэтому надиктованное мы заменяем
+  // целиком — дописывание раздувало запись повторами (см. ERRORS, 18.09).
+  const baseRef = useRef("");
+
+  const speech = useSpeechRecognition((fullText) => {
     setDictated(true);
-    setValue((prev) => (prev ? `${prev.trimEnd()} ${text}` : text));
+    setValue(baseRef.current ? `${baseRef.current} ${fullText}` : fullText);
   });
+
+  const startDictation = () => {
+    baseRef.current = value.trim();
+    speech.start();
+  };
 
   // Ярлык PWA ведёт на /inbox?rec=1 — поднимаем микрофон сразу, чтобы от
   // долгого нажатия на иконку до диктовки было одно движение. Chrome может
@@ -136,6 +146,7 @@ function QuickCapture({
     if (autoStartedRef.current || !supported) return;
     if (new URLSearchParams(window.location.search).get("rec") !== "1") return;
     autoStartedRef.current = true;
+    baseRef.current = "";
     start();
   }, [supported, start]);
 
@@ -152,6 +163,7 @@ function QuickCapture({
           await onAdd(trimmed, dictated ? "voice" : "manual");
           setValue("");
           setDictated(false);
+          baseRef.current = "";
         }}
         className="flex gap-2"
       >
@@ -166,7 +178,7 @@ function QuickCapture({
         {speech.supported && (
           <button
             type="button"
-            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            onClick={() => (speech.listening ? speech.stop() : startDictation())}
             aria-label={speech.listening ? "Остановить диктовку" : "Надиктовать"}
             aria-pressed={speech.listening}
             className={`rounded-[14px] border px-4 py-2.5 text-sm font-semibold ${

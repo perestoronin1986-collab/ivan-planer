@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "check:speech": "tsx scripts/check-speech.ts",
     "vapid": "tsx scripts/vapid.ts",
     "planer": "tsx scripts/planer.ts"
   },

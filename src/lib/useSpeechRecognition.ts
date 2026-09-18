@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * Распознавание речи браузером (Web Speech API).
@@ -16,8 +10,7 @@ import {
  * `supported`: кнопку диктовки показываем только когда он `true`.
  *
  * Сеть нужна: звук уходит на сторону браузера, офлайн распознавание не
- * работает. Это осознанное ограничение — офлайн-канал записи мыслей решается
- * отдельно, не здесь.
+ * работает.
  */
 
 /** В lib.dom.d.ts (TS 5.9) есть только SpeechRecognitionResult* — сам
@@ -34,7 +27,7 @@ interface SpeechRecognitionLike extends EventTarget {
   onend: (() => void) | null;
 }
 
-interface SpeechRecognitionEventLike {
+export interface SpeechRecognitionEventLike {
   resultIndex: number;
   results: SpeechRecognitionResultList;
 }
@@ -57,6 +50,39 @@ function getConstructor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+function join(left: string, right: string): string {
+  if (!left) return right;
+  if (!right) return left;
+  return `${left.trimEnd()} ${right}`;
+}
+
+/**
+ * Полный текст сессии из `event.results`.
+ *
+ * Считаем **всё** с нулевого индекса, а не приращение от `resultIndex`, и
+ * отдаём наружу состояние целиком. Это делает обработку идемпотентной:
+ * движок волен переотдавать одну и ту же фразу сколько угодно раз.
+ *
+ * Дописывание «нового куска» здесь не работает: движок (проверено на живой
+ * записи 18.09) присылает не фрагменты, а всю фразу заново на каждом
+ * уточнении, помечая её `isFinal`. Дописывание превращало
+ * «Привет такая вот идея» в 508 символов нарастающих повторов.
+ */
+export function collectTranscript(event: SpeechRecognitionEventLike): {
+  final: string;
+  interim: string;
+} {
+  let final = "";
+  let interim = "";
+  for (let i = 0; i < event.results.length; i++) {
+    const result = event.results[i];
+    const text = result[0]?.transcript ?? "";
+    if (result.isFinal) final += text;
+    else interim += text;
+  }
+  return { final: final.trim(), interim: interim.trim() };
+}
+
 export type SpeechState = {
   /** API доступен в этом браузере. */
   supported: boolean;
@@ -71,11 +97,12 @@ export type SpeechState = {
 };
 
 /**
- * @param onFinal вызывается на каждый распознанный фрагмент — фрагментов за
- *   одну диктовку может быть несколько, движок режет речь по паузам.
+ * @param onTranscript получает **весь** надиктованный текст, а не дописку.
+ *   Вызывается на каждое уточнение, поэтому подписчик должен заменять
+ *   предыдущее значение, а не складывать с ним.
  */
 export function useSpeechRecognition(
-  onFinal: (text: string) => void,
+  onTranscript: (fullText: string) => void,
 ): SpeechState {
   // Через useSyncExternalStore, а не useState+useEffect: на сервере всегда
   // false, иначе гидрация разойдётся с разметкой.
@@ -92,13 +119,15 @@ export function useSpeechRecognition(
   // Отличает остановку по кнопке от самопроизвольной: на Android движок
   // закрывает сессию после паузы в речи, и её надо поднимать обратно.
   const wantListeningRef = useRef(false);
-  // Через ref, чтобы пересоздание колбэка не перевешивало обработчики
-  // распознавания. Присваиваем в эффекте: запись ref во время рендера ломает
-  // ожидания React и ловится линтером.
-  const onFinalRef = useRef(onFinal);
+  // Движок обнуляет `results` на каждой новой сессии, поэтому текст
+  // завершённых сессий копим отдельно и складываем с текущей.
+  const committedRef = useRef("");
+  const sessionRef = useRef("");
+  // Через ref, чтобы пересоздание колбэка не перевешивало обработчики.
+  const onTranscriptRef = useRef(onTranscript);
   useEffect(() => {
-    onFinalRef.current = onFinal;
-  }, [onFinal]);
+    onTranscriptRef.current = onTranscript;
+  }, [onTranscript]);
 
   const stop = useCallback(() => {
     wantListeningRef.current = false;
@@ -121,17 +150,9 @@ export function useSpeechRecognition(
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      let pending = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        const text = result[0]?.transcript ?? "";
-        if (result.isFinal) {
-          const trimmed = text.trim();
-          if (trimmed) onFinalRef.current(trimmed);
-        } else {
-          pending += text;
-        }
-      }
+      const { final, interim: pending } = collectTranscript(event);
+      sessionRef.current = final;
+      onTranscriptRef.current(join(committedRef.current, final));
       setInterim(pending);
     };
 
@@ -153,7 +174,12 @@ export function useSpeechRecognition(
     };
 
     recognition.onend = () => {
+      // Фиксируем текст сессии до возможного перезапуска — после него
+      // `results` начнётся с нуля и несохранённое потерялось бы.
+      committedRef.current = join(committedRef.current, sessionRef.current);
+      sessionRef.current = "";
       setInterim("");
+
       if (!wantListeningRef.current) {
         setListening(false);
         return;
@@ -170,6 +196,8 @@ export function useSpeechRecognition(
 
     recognitionRef.current = recognition;
     wantListeningRef.current = true;
+    committedRef.current = "";
+    sessionRef.current = "";
     setError(null);
     setInterim("");
     try {
