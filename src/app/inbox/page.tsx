@@ -10,7 +10,7 @@ import {
   processInboxToTaskLocal,
 } from "@/lib/local/mutations";
 import { useUserId } from "@/lib/local/useUser";
-import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
+import { joinTranscript, useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import type { InboxSource } from "@/lib/db";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { PageShell, Section, EmptyState } from "@/components/ui";
@@ -121,14 +121,14 @@ function QuickCapture({
   // кривом распознавании понятно, почему она выглядит странно.
   const [dictated, setDictated] = useState(false);
 
-  // То, что было напечатано руками до начала диктовки. Движок отдаёт всю
-  // фразу заново на каждом уточнении, поэтому надиктованное мы заменяем
-  // целиком — дописывание раздувало запись повторами (см. ERRORS, 18.09).
+  // То, что было напечатано руками до начала диктовки. Надиктованное
+  // заменяется целиком на каждом уточнении: движок переотдаёт фразу заново
+  // и держит её нарастающие версии в results (см. ERRORS, 18.09).
   const baseRef = useRef("");
 
   const speech = useSpeechRecognition((fullText) => {
     setDictated(true);
-    setValue(baseRef.current ? `${baseRef.current} ${fullText}` : fullText);
+    setValue(joinTranscript(baseRef.current, fullText));
   });
 
   const startDictation = () => {

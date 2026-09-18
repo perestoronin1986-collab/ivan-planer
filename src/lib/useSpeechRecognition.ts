@@ -50,10 +50,25 @@ function getConstructor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-function join(left: string, right: string): string {
-  if (!left) return right;
-  if (!right) return left;
-  return `${left.trimEnd()} ${right}`;
+/**
+ * Складывает два куска надиктованного текста.
+ *
+ * Движок отдаёт не только новые куски речи, но и уточнённые версии уже
+ * сказанного — «Не» → «Не забудьте» → «Не забудьте взять». Отличаем версию
+ * от нового куска по вхождению: если один текст начинается с другого, это
+ * та же фраза, и побеждает более полная. Регистр игнорируем — движок
+ * поправляет заглавную букву по ходу уточнения.
+ */
+export function joinTranscript(left: string, right: string): string {
+  const a = left.trim();
+  const b = right.trim();
+  if (!a) return b;
+  if (!b) return a;
+  const lowerA = a.toLowerCase();
+  const lowerB = b.toLowerCase();
+  if (lowerB.startsWith(lowerA)) return b;
+  if (lowerA.startsWith(lowerB)) return a;
+  return `${a} ${b}`;
 }
 
 /**
@@ -63,10 +78,11 @@ function join(left: string, right: string): string {
  * отдаём наружу состояние целиком. Это делает обработку идемпотентной:
  * движок волен переотдавать одну и ту же фразу сколько угодно раз.
  *
- * Дописывание «нового куска» здесь не работает: движок (проверено на живой
- * записи 18.09) присылает не фрагменты, а всю фразу заново на каждом
- * уточнении, помечая её `isFinal`. Дописывание превращало
- * «Привет такая вот идея» в 508 символов нарастающих повторов.
+ * Складывать результаты подряд нельзя: движок (проверено на живых записях
+ * 18.09) держит в `results` нарастающие версии одной фразы — «Не», «Не», «Не
+ * забудьте», «Не забудьте взять» — и метит `isFinal` каждую. Конкатенация
+ * превращала фразу в «НеНеНеНе забудьтеНе забудьте взять…», поэтому склейка
+ * идёт через `joinTranscript`.
  */
 export function collectTranscript(event: SpeechRecognitionEventLike): {
   final: string;
@@ -77,10 +93,10 @@ export function collectTranscript(event: SpeechRecognitionEventLike): {
   for (let i = 0; i < event.results.length; i++) {
     const result = event.results[i];
     const text = result[0]?.transcript ?? "";
-    if (result.isFinal) final += text;
-    else interim += text;
+    if (result.isFinal) final = joinTranscript(final, text);
+    else interim = joinTranscript(interim, text);
   }
-  return { final: final.trim(), interim: interim.trim() };
+  return { final, interim };
 }
 
 export type SpeechState = {
@@ -152,7 +168,7 @@ export function useSpeechRecognition(
     recognition.onresult = (event) => {
       const { final, interim: pending } = collectTranscript(event);
       sessionRef.current = final;
-      onTranscriptRef.current(join(committedRef.current, final));
+      onTranscriptRef.current(joinTranscript(committedRef.current, final));
       setInterim(pending);
     };
 
@@ -176,7 +192,7 @@ export function useSpeechRecognition(
     recognition.onend = () => {
       // Фиксируем текст сессии до возможного перезапуска — после него
       // `results` начнётся с нуля и несохранённое потерялось бы.
-      committedRef.current = join(committedRef.current, sessionRef.current);
+      committedRef.current = joinTranscript(committedRef.current, sessionRef.current);
       sessionRef.current = "";
       setInterim("");
 
