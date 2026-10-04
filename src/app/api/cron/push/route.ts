@@ -9,14 +9,14 @@ export const maxDuration = 60;
 /**
  * Cron-driven Web Push sender.
  *
- * Schedule: every 5 minutes (see vercel.json).
+ * Schedule: every 5 minutes — /etc/cron.d/planer on the VPS (since 2026-10).
  * Reads pending notifications (fire_at <= now AND sent_at IS NULL),
  * sends Web Push to all push_subscription rows for the owner,
  * marks notification.sent_at, prunes expired (410 Gone) subscriptions.
  *
  * Auth:
- *   - Vercel attaches `Authorization: Bearer <CRON_SECRET>` automatically
- *     when CRON_SECRET env var is set (recommended).
+ *   - VPS cron sends `Authorization: Bearer <CRON_SECRET>` to 127.0.0.1:3002;
+ *     nginx returns 404 for /api/cron/ from outside.
  *   - Manual triggers: pass ?secret=<CRON_SECRET> or same Bearer header.
  *
  * Uses the SERVICE ROLE key for unrestricted reads across all users
