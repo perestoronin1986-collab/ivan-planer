@@ -1,0 +1,3 @@
+# Файлы для сервера — всегда LF, даже в рабочей копии Windows (autocrlf).
+*.sh text eol=lf
+scripts/vps/** text eol=lf
