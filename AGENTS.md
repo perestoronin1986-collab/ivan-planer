@@ -33,8 +33,8 @@ npm run planer          # CLI задач: task / project / done / list (без �
 ## Стек — и две вещи, которые выглядят не так, как называются
 
 - **Next.js 16** App Router, React 19, TypeScript, Tailwind **v4** (палитра в `@theme`), lucide-react.
-- **Supabase**: Auth (magic link) + Postgres **через PostgREST** (`@supabase/supabase-js`).
-- **Drizzle — только схема.** Runtime удалён: `src/db/schema.ts` + drizzle-kit существуют ради миграций, ни один запрос через drizzle не идёт. Все данные — `createClient()`. Прямой TCP к Supabase (5432/6543) из России не проходит, поэтому PostgREST не «вкусовщина», а единственный рабочий путь.
+- **Supabase** (свой, в Docker на VPS): Auth (вход по паролю, не magic link) + Postgres **через PostgREST** (`@supabase/supabase-js`).
+- **Drizzle — только схема.** Runtime удалён: `src/db/schema.ts` + drizzle-kit существуют ради миграций, ни один запрос через drizzle не идёт. Все данные — `createClient()`. Прямой TCP к облачному Supabase (5432/6543) из России не проходил, поэтому PostgREST не «вкусовщина», а единственный рабочий путь.
 - **Local-first.** UI читает из Dexie (IndexedDB) через `useLiveQuery`, мутации идут **только через `@/lib/local/mutations`** и падают в outbox-очередь, фоновый sync-engine гоняет их в Supabase. Прямой Supabase допустим лишь в `src/lib/local/sync.ts`. LWW по `updated_at`, удаление мягкое через `deleted_at`. Новую таблицу заводить — значит трогать и Dexie-схему (`src/lib/local/db.ts`, версионируется), и sync.
 
 ## Правила, которые ловили руками
@@ -47,10 +47,12 @@ npm run planer          # CLI задач: task / project / done / list (без �
 
 ## Миграции и прод
 
-- Деплой: **Vercel, автодеплой из `main`**. БД: Supabase `zrxineexwmucsoyttwrx` (eu-central-1).
-- Часть миграций применяется **вручную через Supabase SQL Editor**. Перед деплоем фичи, трогающей БД, — убедиться, что миграция реально применена; статус ведётся в `Status.base`, колонка «Миграция».
-- **Крон push-уведомлений живёт вне Vercel** (Hobby даёт максимум раз в сутки): основной драйвер — cron-job.org каждые 5 мин, резерв — GitHub Actions раз в час, последняя подстраховка — `vercel.json` раз в сутки. Все трое бьют в `/api/cron/push` с `Bearer CRON_SECRET`. Меняешь секрет — меняешь в трёх местах.
-- Бэкапы БД: ежедневный `pg_dump` в 06:00 МСК в приватный репозиторий `ivanplaner-backups`, отдельно от этого проекта.
+- Прод с 2026-10-04: **VPS Timeweb, https://plan.afrolatin.ru**, автодеплой из `main` (`.github/workflows/deploy-vps.yml`, откат автоматический). Vercel и облачный Supabase `zrxineexwmucsoyttwrx` — только откат до ~01.11.2026. БД — свой Supabase в Docker (`/opt/planer-db`); браузер ходит в него через nginx на том же домене.
+- Миграции применяются **вручную в БД на VPS** (SSH-туннель `-L 15433:127.0.0.1:5433`, пароль postgres в `/opt/planer-db/.env`), не через SQL Editor. Перед деплоем фичи, трогающей БД, — убедиться, что миграция реально применена; статус ведётся в `Status.base`, колонка «Миграция».
+- **Два env-файла локально:** `.env.planer` — прод (его читает `npm run planer`, печатает `→ plan.afrolatin.ru`); `.env.local` — облачная копия, только для `npm run dev`. Задачи, записанные в копию, никуда не попадают.
+- **Крон push-уведомлений** — `/etc/cron.d/planer` на VPS, каждые 5 мин, бьёт в `127.0.0.1:3002/api/cron/push` с `Bearer CRON_SECRET`. cron-job.org, GitHub Actions и `vercel.json`-крон убраны.
+- Бэкапы БД: на сервере ночной дамп 01:45 МСК (`/var/backups/planer/`), ПК забирает его `scripts/backup/pull-vps-backup.ps1` (Планировщик, 09:00). Старый репо `ivanplaner-backups` — архив 23.08–04.10.
+- Устройство VPS, nginx, откат — `wiki/ARCHITECTURE.md`, раздел «Инфраструктура (VPS)».
 
 ## После работы
 

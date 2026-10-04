@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-10-04 — Переезд на VPS (plan.afrolatin.ru)
+
+- **infra:** прод перенесён с Vercel + облачного Supabase на VPS Timeweb (`147.45.253.77`, тот же сервер, что CRM/ЛК/сайт), https://plan.afrolatin.ru. `ivan-planer.vercel.app` редиректит на новый домен (`vercel.json` → `redirects`).
+- **Зачем:** доступность из РФ (IP Vercel блокируются, Supabase за Cloudflare душится провайдерами), независимость от Supabase Free (пауза через 7 дней, нет бэкапов), настоящий крон.
+- **БД:** свой минимальный Supabase в Docker (`/opt/planer-db`), всё на 127.0.0.1; nginx отдаёт `/auth/v1/` и `/rest/v1/` на том же домене — браузер ходит в Supabase напрямую. Регистрация закрыта.
+- **feat(auth):** вход по паролю (`signInWithPassword`) вместо magic link — в self-hosted GoTrue нет SMTP. Пароль задаётся на сервере `set-password.sh`.
+- **ci:** `deploy-vps.yml` — автодеплой из `main` (tsc + lint → `git archive | ssh` → `deploy.sh`, health check, авто-откат). Прод — systemd `planer` от пользователя `planer`.
+- **cron:** `/etc/cron.d/planer` каждые 5 мин; cron-job.org отключён, `cron-push.yml` удалён, крон из `vercel.json` убран.
+- **fix(sw):** service worker обходит same-origin `/auth/v1/`, `/rest/v1/` (`v8-same-origin-api-2026-10-04`) — иначе кэш хранил бы личные ответы API.
+- **backup:** на сервере ночной дамп 01:45 МСК; `scripts/backup/pull-vps-backup.ps1` забирает его на ПК (задача «IvanPlaner Backup», 09:00). GitHub-бэкап в `ivanplaner-backups` отключён.
+- **tooling:** `npm run planer` читает `.env.planer` (прод); `.env.local` — облачная копия для dev.
+- VAPID-ключи сгенерированы заново, подписки на push переоформлены. Облако и Vercel-проект — резерв отката до ~01.11.2026.
+- Грабли — [[ERRORS]], 04.10 (gzip на мобильной сети, обход лимита пароля, Sensitive-переменные Vercel). Устройство — [[ARCHITECTURE#Инфраструктура (VPS)]].
+
 ## 2026-09-18 — Фикс: диктовка раздувала мысль
 
 - **fix(inbox):** надиктованная фраза ложилась в инбокс нарастающими повторами — `Привет Привет Привет такая…`, после первого захода `НеНеНеНе забудьте…`.

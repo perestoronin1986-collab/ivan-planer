@@ -1,6 +1,6 @@
 ---
 title: Архитектура IvanPlaner
-updated: 2026-05-26
+updated: 2026-10-04
 tags:
   - architecture
 ---
@@ -17,12 +17,12 @@ tags:
 |------|-----------|
 | Фреймворк | Next.js 16 App Router, TypeScript |
 | UI | Tailwind CSS v4 + brand-палитра в `@theme` (см. `wiki/DESIGN.md`), компоненты `src/components/ui/`, lucide-react |
-| Auth | Supabase Auth (magic link / email) |
-| БД | Supabase Postgres через PostgREST (`@supabase/supabase-js`) |
+| Auth | Supabase Auth (GoTrue), вход по паролю `signInWithPassword` |
+| БД | Свой Supabase в Docker на VPS (Postgres + GoTrue + PostgREST), клиент — `@supabase/supabase-js` |
 | Схема | Drizzle ORM — только `schema.ts` + drizzle-kit для миграций |
 | Recurring | `rrule` — генерация дат повторяющихся задач |
 | Валидация | Zod — в server actions |
-| Деплой | Vercel |
+| Деплой | VPS Timeweb: systemd `planer` + nginx, автодеплой из `main` через GitHub Actions (до 2026-10-04 — Vercel) |
 
 > **Важно:** Drizzle runtime удалён. Все запросы — через `createClient()` (PostgREST), не через drizzle.
 
@@ -32,7 +32,7 @@ tags:
 
 ```
 /                          главная (ссылки на разделы)
-/login                     вход (Supabase magic link)
+/login                     вход (email + пароль)
 /today                     задачи на сегодня + просроченные; вкладка «❄ Заморожено»
 /week                      недельная сетка (7 колонок), навигация по неделям
 /spheres                   список сфер жизни
@@ -45,7 +45,7 @@ tags:
 /auth/callback             OAuth callback Supabase
 /api/push/subscribe        POST — сохранить push_subscription
 /api/push/unsubscribe      POST — удалить push_subscription
-/api/cron/push             внешний крон (cron-job.org) */5min — отправка Web Push по notification.fire_at
+/api/cron/push             крон на VPS (`/etc/cron.d/planer`) */5min — отправка Web Push по notification.fire_at
 ```
 
 ---
@@ -58,9 +58,7 @@ Pipeline:
 task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
                                         │
                                         ▼
-                    cron-job.org каждые 5 мин  ◀── реальный драйвер
-                    (+ GitHub Actions раз в час — резерв)
-                    (+ Vercel cron раз в сутки 06:00 UTC — последняя подстраховка)
+                    /etc/cron.d/planer каждые 5 мин на VPS  ◀── единственный драйвер
                                         │
                                         ▼
                              /api/cron/push → web-push.sendNotification()
@@ -72,16 +70,17 @@ task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
                               showNotification → user
 ```
 
-> [!important] Крон живёт вне Vercel — три уровня (изменено 2026-08-07)
-> На Vercel Hobby крон нельзя чаще раза в сутки, поэтому эндпоинт дёргают снаружи:
-> 1. **cron-job.org, каждые 5 мин — основной драйвер.** POST на `https://ivan-planer.vercel.app/api/cron/push`, заголовок `Authorization: Bearer <CRON_SECRET>`.
-> 2. **GitHub Actions, раз в час (`23 * * * *`) — резерв.** `.github/workflows/cron-push.yml`. Секреты (Settings → Secrets → Actions): `CRON_URL`, `CRON_SECRET`.
-> 3. **`vercel.json`, раз в сутки 06:00 UTC — последняя подстраховка.**
+> [!important] Крон — системный, на VPS (изменено 2026-10-04)
+> Раньше из-за лимитов Vercel Hobby (крон раз в сутки) эндпоинт дёргали снаружи тремя уровнями: cron-job.org (5 мин), GitHub Actions (час), `vercel.json` (сутки). С переездом на VPS это лишнее — настоящий крон есть на сервере.
+> - **`/etc/cron.d/planer`, каждые 5 мин, пользователь `planer`:** POST на `http://127.0.0.1:3002/api/cron/push` (мимо nginx), `CRON_SECRET` достаётся из `.env.production` через `sed`, а не `source` — cron запускает `dash`.
+> - cron-job.org отключён владельцем, `cron-push.yml` удалён, крон из `vercel.json` убран.
+> - Таймзона сервера — UTC.
+> - Снаружи `/api/cron/` закрыт в nginx (404).
 >
 > Двойной вызов безопасен: эндпоинт помечает `notification.sent_at`, уже отправленное пропускается.
 
-> [!warning] Почему GitHub Actions больше не основной
-> Стоял `*/5 * * * *`, но по факту за 831 запуск GitHub давал ~1 запуск в час, разрывы до 3 часов — обещанные 5 минут не соблюдались никогда. Плюс шум от нехватки раннеров: `The job was not acquired by Runner of type hosted even after multiple attempts` (06.08.2026, два запуска подряд отменены). Расписание понижено до часового, чтобы оно не врало и не спамило письмами.
+> [!warning] Почему не GitHub Actions
+> `schedule` в Actions при `*/5` давал по факту ~1 запуск в час (см. [[ERRORS]], 2026-08-07). Системный крон на своём сервере этой проблемы лишён.
 
 - **VAPID**: env `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` + клиентский `NEXT_PUBLIC_VAPID_PUBLIC_KEY`. Генерация: `npm run vapid`.
 - **CRON_SECRET**: проверяется в `/api/cron/push` через `Authorization: Bearer <secret>` или `?secret=`.
@@ -94,10 +93,65 @@ task.remind_at  ──trigger──▶  notification(fire_at, sent_at=null)
 
 ## Авторизация
 
-- Supabase Auth: magic link на email
+- Supabase Auth (GoTrue): вход **по паролю** (`signInWithPassword`). Magic link убран при переезде на VPS — в self-hosted GoTrue нет SMTP. Регистрация закрыта (`signup disabled`; в облаке была открыта). Пароль владелец задаёт на сервере: `ssh -t root@147.45.253.77 /opt/planer-db/set-password.sh <email>` (пароль идёт через stdin, не в чат и не в историю). После полного восстановления БД из дампа пароль станет тем, что был в дампе.
+- Куки сессии — `sb-plan-auth-token` (домен один, CORS нет)
 - `requireUser()` в `src/lib/supabase/server.ts` — проверяет сессию, редиректит на `/login`
 - RLS на всех таблицах: `user_id = auth.uid()` — данные изолированы по пользователю
 - Middleware (`src/middleware.ts`) — обновляет куки Supabase сессии на каждом запросе
+
+---
+
+## Инфраструктура (VPS)
+
+С 2026-10-04 ~23:05 МСК прод — VPS Timeweb `147.45.253.77` (Москва, общий с CRM, ЛК и сайтом), https://plan.afrolatin.ru. Старый `ivan-planer.vercel.app` редиректит на новый домен (`vercel.json` → `redirects`).
+
+> [!tip] Зачем переехали
+> - **Доступность из России:** IP Vercel блокируются, а Supabase сидит за Cloudflare, который российские провайдеры душат.
+> - **Независимость от Supabase Free:** пауза после 7 дней простоя, бэкапов нет.
+> - **Настоящий крон** вместо трёх костылей.
+
+**Раскладка**
+
+| Что | Где |
+|-----|-----|
+| Приложение | `/opt/planer/releases/<sha>-<timestamp>`, симлинк `current`, systemd `planer` (User `planer`, не root, не pm2) на `127.0.0.1:3002` |
+| Env приложения | `/opt/planer/shared/.env.production` (640 root:planer) |
+| БД | свой минимальный Supabase в Docker, `/opt/planer-db`: supabase/postgres 17.6.1.127, GoTrue v2.197.0 (= версия облака), PostgREST v14.5 |
+| Порты (только 127.0.0.1) | Postgres `:5433`, GoTrue `:9998`, PostgREST `:3012` |
+| nginx | `/etc/nginx/sites-available/planer` = `scripts/vps/nginx-planer.conf` |
+| Файлы стенда в репо | `scripts/vps/planer-db/`: `docker-compose.yml`, `db-restore.sh`, `set-password.sh`, `gen-keys.mjs`, `acl-check.sql`, `init/99-roles.sql` |
+
+**Ключевое отличие от CRM.** У CRM в Supabase ходит только сервер, у планера — **браузер напрямую** (логин, Dexie-синк). Поэтому nginx отдаёт `/auth/v1/` и `/rest/v1/` на том же домене `plan.afrolatin.ru`: CORS не нужен, cookie общая. Стенд отдельный от `/opt/crm-db` (свой GoTrue, свой JWT secret, независимые обновления).
+
+**Решения по БД**
+- JWT secret **не** лежит настройкой БД (`app.settings.jwt_secret` убран): любой `current_setting()` смог бы его прочитать.
+- `PGRST_DB_MAX_ROWS=1000` — как в облаке (измерено); синк тянет страницы по 1000.
+- OpenAPI выключен, регистрация закрыта.
+- Секреты — `/opt/planer-db/.env` (600), сгенерированы на сервере `gen-keys.mjs`.
+
+**nginx**
+- 404 на `/_next/image` (RCE GHSA-2xp9-vwfh-vxw4), на `/api/cron/` снаружи и на `/auth/v1/admin`.
+- Лимит на `POST /auth/v1/token`: 10/мин, burst 5, ответ 429. Исключение — только точный `grant_type=refresh_token`. Map инвертирован намеренно: `$arg_grant_type` сырой, и белый список «password» обходился через `%70assword` (см. [[ERRORS]]). Location — regex `^/auth/v1/token/?$`.
+- Security-заголовки; gzip включён и для `application/json` (без него первая синхронизация на мобильной сети не заканчивалась, см. [[ERRORS]]).
+
+**Автодеплой.** Push в `main` → `.github/workflows/deploy-vps.yml` (tsc + lint) → `git archive | ssh` ключом с forced-command (секрет `VPS_DEPLOY_KEY`) → `/opt/planer/ci-deploy.sh` → `/opt/planer/deploy.sh`: сборка от пользователя `planer`, health check `/login`, авто-откат на прошлый релиз при провале. Руками: Actions → Deploy VPS → Run workflow.
+
+**Service worker.** `isSupabaseRequest` теперь обходит и same-origin `/auth/v1/`, `/rest/v1/` — иначе runtime-кэш сложил бы личные ответы API. `VERSION = v8-same-origin-api-2026-10-04`.
+
+**Бэкапы**
+- Сервер: `/opt/planer/backup-db.sh`, 22:45 UTC (01:45 МСК) → `/var/backups/planer/planer_*.sql.gz`, 30 дней, `latest.sql.gz`.
+- ПК: `scripts/backup/pull-vps-backup.ps1`, задача Планировщика Windows «IvanPlaner Backup», ежедневно 09:00 (`StartWhenAvailable`), в `Бэкап\` (в gitignore), 30 дней.
+- Конфиги сервера (env планера, скрипты, `.env` стенда, unit systemd) входят в ночной архив конфигов VPS из репо CRM (`vps-config-backup.sh`).
+- Старый workflow репо `ivanplaner-backups` отключён (облако больше не меняется); репо оставлен архивом 23.08–04.10.
+
+**Обслуживание.** Раз в месяц вместе со стендом CRM: `cd /opt/planer-db && docker compose pull && docker compose up -d`.
+
+**CLI задач.** `npm run planer` читает `.env.planer` (`PLANER_URL=https://plan.afrolatin.ru`, `PLANER_SERVICE_ROLE_KEY`) раньше `.env.local` и печатает целевой хост `→ plan.afrolatin.ru` в stderr. `.env.local` смотрит на облачную копию — только для локальной разработки.
+
+> [!warning] Откат (до ~01.11.2026)
+> Вернуть `vercel.json` и коммит с логином, включить `cron-push.yml` и cron-job.org, убрать `/etc/cron.d/planer`. Облачная БД цела, но без изменений, сделанных на VPS после 04.10 23:04 МСК. После ~01.11 Vercel-проект и облачный Supabase удалить (решает владелец).
+
+Пуши: VAPID-ключи при переезде сгенерированы заново (в Vercel они были Sensitive, `vercel env pull` отдал пустые строки), старые подписки удалены, владелец подписался заново на новом домене.
 
 ---
 

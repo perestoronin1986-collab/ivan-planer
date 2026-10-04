@@ -13,7 +13,7 @@ tags:
 > **Область:** push · **Статус:** в проде · **Деплой:** да
 
 ## Суть
-VAPID + Web Push API. `task.remind_at` → Postgres trigger `sync_task_notification` создаёт строку в `notification`. Внешний крон cron-job.org (каждые 5 мин) дёргает `/api/cron/push`, тот шлёт pending через `web-push`. GitHub Actions (`.github/workflows/cron-push.yml`, `23 * * * *`) остался резервом — раньше был основным с `*/5`, но GitHub давал по факту раз в час, см. [[ERRORS]]. SW обрабатывает `push`. Крон вынесен в Actions, потому что Vercel Hobby не даёт чаще раза в сутки — см. [[ARCHITECTURE]].
+VAPID + Web Push API. `task.remind_at` → Postgres trigger `sync_task_notification` создаёт строку в `notification`. Системный крон на VPS (`/etc/cron.d/planer`, каждые 5 мин, с 2026-10-04) дёргает `/api/cron/push`, тот шлёт pending через `web-push`. Раньше крон был снаружи (cron-job.org + GitHub Actions + Vercel) из-за лимитов Vercel Hobby; GitHub `*/5` давал по факту раз в час, см. [[ERRORS]]. При переезде VAPID-ключи сгенерированы заново — подписки переоформлены. SW обрабатывает `push`. Схема — [[ARCHITECTURE]].
 
 ## Реализация
 - Подписка/отписка `/api/push/subscribe`+`/unsubscribe`, тоггл в `/settings`
