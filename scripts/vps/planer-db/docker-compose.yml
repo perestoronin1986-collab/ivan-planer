@@ -1,0 +1,73 @@
+# База планера на VPS: Postgres + GoTrue (вход) + PostgREST. Всё на 127.0.0.1;
+# наружу /auth/v1 и /rest/v1 отдаёт nginx на plan.afrolatin.ru (браузер планера
+# ходит в Supabase сам — вход и офлайн-синхронизация Dexie).
+# План: docs/superpowers/plans/2026-10-04-planer-to-vps.md
+name: planer-db
+services:
+  db:
+    image: public.ecr.aws/supabase/postgres:17.6.1.127
+    restart: unless-stopped
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal",
+              "-c", "shared_buffers=64MB", "-c", "max_connections=40"]
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: 5432
+      POSTGRES_PORT: 5432
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
+      - ./init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:ro
+    ports: ["127.0.0.1:5433:5432"]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth:
+    image: public.ecr.aws/supabase/gotrue:v2.197.0   # = версия облака планера на 04.10.2026
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: https://plan.afrolatin.ru/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      GOTRUE_SITE_URL: https://plan.afrolatin.ru
+      GOTRUE_DISABLE_SIGNUP: "true"          # в облаке было открыто; учётки две, новых не надо
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"  # нужен для входа по паролю
+      GOTRUE_MAILER_AUTOCONFIRM: "true"      # почты нет
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      GOTRUE_PASSWORD_MIN_LENGTH: 10
+    ports: ["127.0.0.1:9998:9999"]
+    mem_limit: 128m
+
+  rest:
+    image: public.ecr.aws/supabase/postgrest:v14.5
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+      PGRST_DB_MAX_ROWS: 1000                # = облако планера (замер 04.10: Content-Range 0-999/3288), sync тянет по 1000
+      PGRST_OPENAPI_MODE: disabled           # REST смотрит наружу — схему не публикуем; supabase-js её не читает
+    ports: ["127.0.0.1:3012:3000"]
+    mem_limit: 128m
