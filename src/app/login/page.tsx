@@ -26,8 +26,8 @@ export default function LoginPage() {
       );
       return;
     }
-    // Полная перезагрузка: middleware должен увидеть cookie сессии.
-    window.location.assign("/");
+    // Полная перезагрузка: middleware должен увидеть cookie сессии; replace — чтобы «назад» не вёл на /login.
+    window.location.replace("/");
   }
 
   const field =
