@@ -1,0 +1,4 @@
+# Планер — push-уведомления каждые 5 минут (раньше: cron-job.org + GitHub Actions + vercel.json).
+# Дубли безопасны: эндпоинт помечает notification.sent_at.
+*/5 * * * *  planer  . /opt/planer/shared/.env.production; curl -sS -m 70 -X POST -H "Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3002/api/cron/push >> /opt/planer/home/cron.log 2>&1
+45 22 * * *  root    /opt/planer/backup-db.sh >> /var/log/planer-backup.log 2>&1

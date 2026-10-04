@@ -1,0 +1,50 @@
+name: Deploy VPS
+
+# Выкатка планера на VPS (147.45.253.77, plan.afrolatin.ru) при push в main.
+# Сначала tsc + lint: красные — не выкатываем. Руками: Actions → Deploy VPS → Run workflow.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Проверки
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsc --noEmit
+          npm run lint
+
+      - name: Ключ и известный хост
+        env:
+          VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          KEY=$(printf '%s' "$VPS_DEPLOY_KEY" | tr -d '\r')
+          case "$KEY" in
+            -----BEGIN*) printf '%s\n' "$KEY" > ~/.ssh/deploy_key ;;
+            *) printf '%s' "$KEY" | tr -d ' \n' | base64 -d > ~/.ssh/deploy_key ;;
+          esac
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::VPS_DEPLOY_KEY — не приватный ключ"; exit 1; }
+          # Ключ хоста зашит, а не берётся ssh-keyscan'ом: иначе подменённый сервер получил бы код.
+          echo '147.45.253.77 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK1AgxgqNd0eB0+HF12qPg8q7U8NKHg2ZRecNRwTUUDK' > ~/.ssh/known_hosts
+
+      - name: Выкатка
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          git archive --format=tar.gz HEAD \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@147.45.253.77 "$SHA"

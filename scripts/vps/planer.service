@@ -1,0 +1,23 @@
+# /etc/systemd/system/planer.service — планер под своим пользователем, не root (аудит VPS 02.10.2026, п.3).
+[Unit]
+Description=IvanPlaner (Next.js)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+User=planer
+Group=planer
+WorkingDirectory=/opt/planer/current
+Environment=NODE_ENV=production
+Environment=HOME=/opt/planer/home
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3002 -H 127.0.0.1
+Restart=always
+RestartSec=3
+MemoryMax=600M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
