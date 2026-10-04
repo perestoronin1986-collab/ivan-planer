@@ -1,13 +1,16 @@
 import { config } from "dotenv";
+// .env.planer — прод-планер (plan.afrolatin.ru, ключ service_role стенда на VPS).
+// .env.local после переезда указывает на облачную копию для разработки, писать туда задачи нельзя.
+config({ path: ".env.planer" });
 config({ path: ".env.local" });
 
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.PLANER_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const key = process.env.PLANER_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !key) {
-  console.error("Нужны NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в .env.local");
+  console.error("Нужны PLANER_URL и PLANER_SERVICE_ROLE_KEY в .env.planer (или NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в .env.local)");
   process.exit(1);
 }
 
