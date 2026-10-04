@@ -14,6 +14,9 @@ if (!url || !key) {
   process.exit(1);
 }
 
+// Куда пишем — видно в каждом запуске: молчаливый откат на облачную копию был бы незаметен.
+console.error(`→ ${new URL(url).host}`);
+
 const db = createClient(url, key, { auth: { persistSession: false } });
 
 function flag(name: string): string | undefined {

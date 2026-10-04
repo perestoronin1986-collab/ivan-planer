@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Выкатка планера на VPS. deploy.sh <sha>, архив коммита уже в /tmp/planer-<sha>.tgz.
+# Выкатка планера на VPS. deploy.sh <sha>, архив коммита уже в /opt/planer/incoming/planer-<sha>.tgz.
 # Сборка в releases/<sha> от пользователя planer, живой процесс смотрит в current,
 # откат — перевесить current на прошлый релиз. Образец — /opt/crm/deploy.sh.
 set -euo pipefail
 
 SHA="$1"
 ROOT=/opt/planer
-REL="$ROOT/releases/$SHA"
-ARCHIVE="/tmp/planer-$SHA.tgz"
+# Каталог релиза уникален: повторная выкатка того же sha не должна стирать живой
+# релиз, а откат — указывать на самого себя.
+REL="$ROOT/releases/$SHA-$(date -u +%Y%m%d%H%M%S)"
+# Архив в каталоге root:700, а не в /tmp: planer (скрипты npm) мог бы подложить свой.
+ARCHIVE="$ROOT/incoming/planer-$SHA.tgz"
 PORT=3002
 AS=(runuser -u planer -- env HOME="$ROOT/home")
 

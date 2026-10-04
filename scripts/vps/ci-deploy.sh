@@ -7,8 +7,11 @@ set -euo pipefail
 SHA="${SSH_ORIGINAL_COMMAND:-}"
 [[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "ожидался sha коммита, пришло: '$SHA'" >&2; exit 2; }
 
-exec 9>/tmp/planer-deploy.lock
+# Замок и архив не в /tmp: туда пишет planer (скрипты npm), а при protected_regular=2
+# root не откроет чужой заранее созданный файл.
+exec 9>/run/planer-deploy.lock
 flock 9
 
-cat > "/tmp/planer-$SHA.tgz"
+install -d -m 700 /opt/planer/incoming
+cat > "/opt/planer/incoming/planer-$SHA.tgz"
 exec /opt/planer/deploy.sh "$SHA"

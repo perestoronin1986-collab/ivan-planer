@@ -12,8 +12,11 @@ ID=$(curl -sf "http://127.0.0.1:9998/admin/users?per_page=50" -H "Authorization:
 read -rsp "Новый пароль (от 10 символов): " P1; echo
 read -rsp "Ещё раз: " P2; echo
 [ "$P1" = "$P2" ] || { echo "не совпали" >&2; exit 1; }
+[ "${#P1}" -ge 10 ] || { echo "пароль короче 10 символов — GoTrue его не примет" >&2; exit 1; }
 # Пароль идёт через stdin, не через argv — его не видно в ps.
-printf '%s' "$P1" | python3 -c 'import sys,json; print(json.dumps({"password": sys.stdin.read()}))' \
-  | curl -sf -X PUT "http://127.0.0.1:9998/admin/users/$ID" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-      -H "Content-Type: application/json" --data @- -o /dev/null
+if ! RESP=$(printf '%s' "$P1" | python3 -c 'import sys,json; print(json.dumps({"password": sys.stdin.read()}))' \
+  | curl -sS --fail-with-body -X PUT "http://127.0.0.1:9998/admin/users/$ID" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+      -H "Content-Type: application/json" --data @-); then
+  echo "GoTrue отказал: $RESP" >&2; exit 1
+fi
 echo "пароль задан для $EMAIL"

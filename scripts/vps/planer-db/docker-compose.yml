@@ -7,6 +7,8 @@ services:
   db:
     image: public.ecr.aws/supabase/postgres:17.6.1.127
     restart: unless-stopped
+    # Секрет JWT в настройки БД (app.settings.*) не кладём — его прочитал бы любой
+    # current_setting(); SQL-функции планера его не используют.
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal",
               "-c", "shared_buffers=64MB", "-c", "max_connections=40"]
     environment:
@@ -17,12 +19,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: postgres
       POSTGRES_DB: postgres
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXP: 3600
     volumes:
       - ./data:/var/lib/postgresql/data
       - ./init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
-      - ./init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:ro
     ports: ["127.0.0.1:5433:5432"]
     mem_limit: 512m
     healthcheck:
@@ -52,6 +51,7 @@ services:
       GOTRUE_MAILER_AUTOCONFIRM: "true"      # почты нет
       GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
       GOTRUE_PASSWORD_MIN_LENGTH: 10
+      GOTRUE_RATE_LIMIT_HEADER: X-Real-IP    # свой лимит GoTrue по реальному IP; X-Forwarded-For клиент подделывает
     ports: ["127.0.0.1:9998:9999"]
     mem_limit: 128m
 
@@ -65,8 +65,6 @@ services:
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: ${JWT_SECRET}
       PGRST_DB_USE_LEGACY_GUCS: "false"
-      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
-      PGRST_APP_SETTINGS_JWT_EXP: 3600
       PGRST_DB_MAX_ROWS: 1000                # = облако планера (замер 04.10: Content-Range 0-999/3288), sync тянет по 1000
       PGRST_OPENAPI_MODE: disabled           # REST смотрит наружу — схему не публикуем; supabase-js её не читает
     ports: ["127.0.0.1:3012:3000"]
