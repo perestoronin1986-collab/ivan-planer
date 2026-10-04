@@ -6,7 +6,7 @@
 //   - Supabase API: bypass (online-only; Dexie keeps local copy)
 //   - Push: forward to Notifications API
 
-const VERSION = "v7-habits-2026-06-01";
+const VERSION = "v8-same-origin-api-2026-10-04";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
@@ -51,8 +51,15 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// API Supabase: облако (*.supabase.co) и своя база на том же домене
+// (plan.afrolatin.ru/auth/v1, /rest/v1 — с переезда на VPS 2026-10).
+// Мимо кеша: офлайн данные держит Dexie, а не Cache API.
 function isSupabaseRequest(url) {
-  return url.hostname.endsWith(".supabase.co");
+  return (
+    url.hostname.endsWith(".supabase.co") ||
+    (url.origin === self.location.origin &&
+      (url.pathname.startsWith("/auth/v1/") || url.pathname.startsWith("/rest/v1/")))
+  );
 }
 
 function isStatic(url) {
